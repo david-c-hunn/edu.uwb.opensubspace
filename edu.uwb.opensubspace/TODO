@@ -1,0 +1,22 @@
+TODO:
+[done] - MineClus description 
+[done] - DOC and SEPC: add some detail about quality function
+[need] - Edit down Metrics section
+[need] - Gather run time data
+[need] - Make graphs of run time data
+[need] - Write conclusion
+[need] - Create separate versions of figures
+[need] - Find papers to site for subspace clustering applications:
+ 	   		- gene expression
+ 			- metabolic screening
+ 			- customer recomendation
+			- computer vision
+[need] - compile real-world data
+[need] - Make graphs of real-world data
+
+download statpc results file and see where to restart
+download sepc real subspace results and see where to restart
+
+
+
+java -Xmx1024m -cp i9-weka.jar:weka.jar:i9-subspace.jar:Jama.jar:jsc.jar:commons-math-1.1.jar:vecmath.jar:j3dcore.jar:j3dutils.jar weka.subspaceClusterer.SubspaceClustererEvaluator -sc Sepc -t Databases/synth_dbsizescale/S5500.arff -T Databases/synth_dbsizescale/S5500.true -c last -M Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA -timelimit 30 -a 0.09 -b 0.35 -w 100 -e 0.05 -m 1 -n 0 -o .5 -d 0.25 -s 0.5 -x true >> output/sepc-runtime

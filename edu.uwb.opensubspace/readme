@@ -1,0 +1,9 @@
+Parameter Tuning Scripts
+Author: Dave Hunn
+Date:   2/10/2013
+
+To run the scripts remotely while logged off use the following command:
+
+	nohup sh scypt-name.sh 2> nohup.err < /dev/null &
+
+Then you don't have to maintain your ssh session in order for the script to continue running.
