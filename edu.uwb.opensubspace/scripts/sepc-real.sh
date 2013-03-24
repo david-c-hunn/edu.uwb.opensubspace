@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # File Name: sepc-synth.sh
 # Author:    Dave Hunn      

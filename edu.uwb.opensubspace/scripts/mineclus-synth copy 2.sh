@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # File Name: mineclus-synth.sh
 # Author:    Dave Hunn      

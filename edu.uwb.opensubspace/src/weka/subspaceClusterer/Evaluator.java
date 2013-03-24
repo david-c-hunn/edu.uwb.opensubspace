@@ -398,7 +398,7 @@ public class Evaluator implements Serializable {
   }
 
   /**
-   * 
+   * Clears existing evaluation results.
    */
   private void clear() {
     m_clusteringResults = new StringBuffer();
@@ -487,6 +487,7 @@ public class Evaluator implements Serializable {
     private void setException(Exception e) {
       this.e = e;
     }
+    
     @SuppressWarnings("unused")
     public Exception getException() {
       return e;
@@ -499,10 +500,6 @@ public class Evaluator implements Serializable {
         this.setException(e);
       }
     }
-
-    
-
-    
   }
 
 
@@ -547,6 +544,11 @@ public class Evaluator implements Serializable {
     // General options
     optionsText.append("\n\nGeneral options:\n\n");
 
+    optionsText.append("-sc <subspace clusterer>\n");
+    optionsText.append("\tSpecifies the subspace clustering algorithm to\n");
+    optionsText.append("\tevaluate. It must be one of the algorithms in \n");
+    optionsText.append("\tin the package weka.subspaceClusterer.\n");
+    
     optionsText.append("-t <name of input file>\n");
     optionsText.append("\tSpecifies the input arff file containing the\n");
     optionsText.append("\tdata set to cluster.\n");
@@ -604,7 +606,9 @@ public class Evaluator implements Serializable {
     Evaluator eval = null;
     String outFileName = null;
     PrintWriter output = null;
-
+    
+//    System.out.println(System.getProperty("user.dir"));
+    
     try {
       outFileName = Utils.getOption("outfile", args);
       if (outFileName.length() > 0) {

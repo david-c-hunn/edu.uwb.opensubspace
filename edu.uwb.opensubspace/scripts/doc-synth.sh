@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # File Name: doc-synth.sh
 # Author:    Dave Hunn      

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # File Name: bench-doc-synth.sh
 # Author:    Dave Hunn      

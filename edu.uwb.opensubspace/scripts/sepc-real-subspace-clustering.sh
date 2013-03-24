@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # File Name: sepc-real-subspace.sh
 # Author:    Dave Hunn      
