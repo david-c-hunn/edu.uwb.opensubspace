@@ -34,7 +34,7 @@ do
 			for j in {1..6}
 			do
 				echo "$(date): Running CLIQUE with XI=${XI} and TAU=${TAU}..."
-				java -Xmx1024m -cp $class_path -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -XI $XI -TAU $TAU -timelimit 30 >> $outfile
+				# java -Xmx1024m -cp $class_path -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -XI $XI -TAU $TAU -timelimit 30 >> $outfile
 				XI="$(echo "$XI + $XI_OFFSET" | bc)"
 			done
 			TAU="$(echo "$TAU * $TAU_OFFSET" | bc)"

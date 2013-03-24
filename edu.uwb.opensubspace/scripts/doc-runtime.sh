@@ -8,7 +8,6 @@
 #
 
 # non-algorithm specific settings
-class_path="i9-weka.jar:weka.jar:i9-subspace.jar:Jama.jar:jsc.jar:commons-math-1.1.jar:vecmath.jar:j3dcore.jar:j3dutils.jar weka.subspaceClusterer.SubspaceClustererEvaluator"
 dbs="Databases/synth_dbsizescale/*.arff Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff"
 metrics="Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA"
 

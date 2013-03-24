@@ -1,14 +1,12 @@
 #!/bin/sh
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # File Name: sepc-synth.sh
 # Author:    Dave Hunn      
-# Date:      3/11/2013
+# Date:      3/24/2013
 # Purpose:   This is a bash shell script to run parameter tuning on SEPC.
-#
 
 # non-algorithm specific settings
-dbs="../Databases/synth_dbsizescale/*.arff ../Databases/synth_dimscale/*.arff ../Databases/synth_noisescale/*.arff"
+dbs="Databases/synth_dbsizescale/*.arff Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff"
 metrics="Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA"
 
 # the algorithm
@@ -29,14 +27,19 @@ DIM_OVERLAP_OFFSET=0.1 # additive
 MAX_OVERLAP_OFFSET=0.1 # additive
 W_OFFSET=25            # additive
 
-echo "Running evaluations for ${clusterer}..."
+# I assume this file resides in the /scripts directory. Moving one directory up
+# should take us into the parent directory where the runnable jar resides
+# and the relative paths used in this script will be correct.
+cd ..
+
+echo "Running evaluations for ${clusterer}"
 
 for db in $dbs; do
 	for in_file in $db; do
 		true_file=${in_file/arff/true}
-		outfile="../output/${clusterer}-synth"
+		outfile="output/${clusterer}-synth"
 		
-		echo "Starting evaluation of ${in_file}..."
+		echo "Starting evaluation of ${in_file}"
 		
 		BETA=0.2 # initialize		
 		for i in {1..4}; do
@@ -47,7 +50,7 @@ for db in $dbs; do
 					MAX_OVERLAP=0.5 # initialize
 					for l in {1..5}; do
 						echo "$(date): Running ${clusterer} with BETA=${BETA}, W=${W}, DIM_OVERLAP=${DIM_OVERLAP}, and MAX_OVERLAP=${MAX_OVERLAP}"
-						java -Xmx1024m -jar ../evaluator.jar -sc $clusterer -t $in_file -T $true_file -outfile outfile -c last -M $metrics -timelimit 30 -a $ALPHA -b $BETA -w $W -e $EPSILON -m $MU_0 -n 0 -o $MAX_OVERLAP -d $DIM_OVERLAP -s $MIN_SUBSPACE -x false 
+						java -Xmx1024m -jar evaluator.jar -sc $clusterer -t $in_file -T $true_file -outfile $outfile -c last -M $metrics -timelimit 30 -a $ALPHA -b $BETA -w $W -e $EPSILON -m $MU_0 -n 0 -o $MAX_OVERLAP -d $DIM_OVERLAP -s $MIN_SUBSPACE -x false 
 					
 						MAX_OVERLAP="$(echo "$MAX_OVERLAP + $MAX_OVERLAP_OFFSET" | bc)"		
 					done
@@ -60,5 +63,6 @@ for db in $dbs; do
 		echo "Finished evaluation of ${in_file}..." 
 	done
 done
-
 echo "$(date): Finished evaluation of all synthetic data sets for ${clusterer}"
+
+exit 0

@@ -2,10 +2,27 @@ Parameter Tuning Scripts
 Author: Dave Hunn
 Date:   2/10/2013
 
+Some notes on running the scripts in this directory.
+
+
 To run the scripts remotely while logged off use the following command:
 
 	nohup sh scipt-name.sh 2> nohup.err < /dev/null &
 
 Then you don't have to maintain your ssh session in order for the script to continue running.
+Alternatively, use the run.sh script which just does the above with a passed tuning script.
+	
+	./run.sh script-name
+
+In addition, run.sh redirects the outputs thusly
+
+	1> script-name.out
+	2> script-name.err
+
+This makes it a little easier to check on the status of individual algorithms.
+
 
 If you don't want to call the script using 'sh script-name' then you can make the script executable using 
+
+chmod +x script-name
+
