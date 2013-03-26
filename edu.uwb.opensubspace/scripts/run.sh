@@ -9,3 +9,5 @@ if  [ ! -d log ]; then
 	mkdir log
 fi
 nohup sh $1 1> "log/${1}.out" 2> "log/${1}.err" < /dev/null &
+
+exit 0

@@ -16,8 +16,8 @@ Alternatively, use the run.sh script which just does the above with a passed tun
 
 In addition, run.sh redirects the outputs thusly
 
-	1> script-name.out
-	2> script-name.err
+	1> log/script-name.out
+	2> log/script-name.err
 
 This makes it a little easier to check on the status of individual algorithms.
 
