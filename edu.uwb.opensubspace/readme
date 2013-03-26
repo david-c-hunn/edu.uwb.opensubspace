@@ -1,0 +1,11 @@
+This is the code for my capstone project at UW Bothell.
+
+This is a slightly modifed version of OpenSubspace. I am using it in my research
+on subspace clustering.
+
+Here's a reference to OpenSubspace:
+
+Müller E., Günnemann S., Assent I., Seidl T.:
+Evaluating Clustering in Subspace Projections of High Dimensional Data
+http://dme.rwth-aachen.de/OpenSubspace/
+In Proc. 35th International Conference on Very Large Data Bases (VLDB 2009), Lyon, France. (2009) 
