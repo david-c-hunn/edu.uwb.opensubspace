@@ -26,3 +26,5 @@ If you don't want to call the script using 'sh script-name' then you can make th
 
 chmod +x script-name
 
+Useful for copying files to/from the server. A little easier than ftp.
+scp mineclus-real.sh hunnd@uw1-320-lab.uwb.edu:/net/metis/home2/hunnd/edu.uwb.opensubspace/scripts
