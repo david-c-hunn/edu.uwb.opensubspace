@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# File Name: mineclus-synth.sh
+# File Name: mineclus-real.sh
 # Author:    Dave Hunn      
 # Date:      3/17/2013
 # Purpose:   This is a bash shell script to run parameter tuning on MINECLUS.
@@ -34,7 +34,7 @@ echo "Running evaluations for ${clusterer}"
 
 for in_file in $db; do
 	true_file=${in_file/arff/true}
-	outfile="output/${clusterer}-synth"
+	outfile="output/${clusterer}-real"
 	echo "Starting evaluation of ${in_file}..."
 	ALPHA=0.001  # initialize
 	for i in {1..3}; do

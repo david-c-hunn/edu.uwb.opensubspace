@@ -13,9 +13,9 @@ metrics="Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA"
 clusterer="Sepc"
 
 # algorithm arguments
-ALPHA=0.001 
-BETA=0.1 
-EPSILON=0.001
+ALPHA=0.05
+BETA=0.2 
+EPSILON=0.05
 DIM_OVERLAP=0.1 
 MAX_OVERLAP=0.5 
 MIN_SUBSPACE=0.5
