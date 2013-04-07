@@ -1,9 +1,9 @@
 
 
-package i9.subspace.sepc;
-import i9.data.core.Instance;
+package i9.subspace.sam;
+import i9.data.core.DataSet;
+//import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
-import i9.subspace.sepc.SASC.DataPoint;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,10 +12,10 @@ import java.util.List;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
+import weka.core.Instance;
+
 /**
- * NOTES: 
- *   (1) Look into PROCLUS and how it determines the relevant subspace
- *       for each medoid.
+ * 
  * @author dave
  *
  */
@@ -27,7 +27,7 @@ public class SoftCluster extends Cluster {
 	/** 
 	 * The whole data set. This reference is maintained for quality calculations.
 	 */
-	private List<DataPoint> m_dataSet;
+	private DataSet m_dataSet;
 	
 	/** The center the of the cluster */
 	private double[] m_center;
@@ -51,7 +51,7 @@ public class SoftCluster extends Cluster {
 	 * lambda to values less than one (but greater than zero) will cause the 
 	 * weights associated with low spread attributes to dominate.
 	 */
-	private double m_lambda;
+	private double m_lambda = 50;
 	
 	/** 
 	 *  Also cache the scores for each object, since, only later are outliers
@@ -64,6 +64,15 @@ public class SoftCluster extends Cluster {
 	
 	/** Used to calculate sample standard deviation (uses n-1) along a dimension. */
 	private static final StandardDeviation m_stdDevCalc = new StandardDeviation();
+	
+	
+	public double[] center() {
+    return m_center;
+  }
+  
+  public double[] spread() {
+    return m_spread;
+  }
 	
 	/** 
 	 * Copy Constructor.
@@ -84,20 +93,13 @@ public class SoftCluster extends Cluster {
 	 * @param subspace
 	 * @param objects
 	 */
-	public SoftCluster(boolean[] subspace, List<Integer> objects) {
+	public SoftCluster(boolean[] subspace, List<Integer> objects, DataSet data) {
 		super(subspace, objects);
 		m_center = new double[subspace.length];
 		m_spread = new double[subspace.length];
 		m_weights = new double[subspace.length];
-		m_lambda = 50;
-	}
-	
-	public double[] center() {
-	  return m_center;
-	}
-	
-	public double[] spread() {
-	  return m_spread;
+		m_dataSet = data;
+		
 	}
 	
 	/**
@@ -108,12 +110,11 @@ public class SoftCluster extends Cluster {
 	 * @param data   -- The list of possible data points to be clustered.
 	 * @return True all the time. Pretty useful, huh.
 	 */
-	public boolean calc(List<Integer> sample, List<DataPoint> data) {
-	  ArrayList<double[]> discSet = transpose(sample, data);
+	public boolean calc(List<Integer> sample) {
+	  ArrayList<double[]> discSet = transpose(sample);
 		
-	  m_objScore = new double[data.size()]; // allocate storage to cache each object score
-		m_score = -1;                         // Make sure quality is calc'd with next request
-		m_dataSet = data;                     // keep a reference to data for later use
+	  m_objScore = new double[m_dataSet.getInstanceCount()]; // allocate storage to cache each object score
+		m_score = -1;                                          // Make sure quality is calc'd with next request
 		
 		// find the mean and standard deviation along each dimension
 		for (int c = 0; c < discSet.size(); ++c) {
@@ -140,12 +141,11 @@ public class SoftCluster extends Cluster {
 	 * Returns a transposed matrix.
 	 * 
 	 * @param sample -- The indexes of instances within data to transpose.
-	 * @param data   -- The data to pull instances from.
 	 * @return A transposed matrix.
 	 */
-	private static ArrayList<double[]> transpose(List<Integer> sample, List<DataPoint> data) {
+	private ArrayList<double[]> transpose(List<Integer> sample) {
 		ArrayList<double[]> retVal = new ArrayList<double[]>();
-		int cols = data.get(0).instance.getDataSet().getNumDimensions();
+		int cols = m_dataSet.getNumDimensions();
 		int rows = sample.size();
 
 		for (int c = 0; c < cols; ++c) {
@@ -153,8 +153,9 @@ public class SoftCluster extends Cluster {
 		}
 
 		for (int r = 0; r < rows; ++r) {
-			Instance inst = data.get(sample.get(r)).instance;
-			double values[] = inst.getFeatureArray();
+		  Instance inst = m_dataSet.instance(1);
+			double values[] = inst.toDoubleArray();
+			
 			for (int c = 0; c < cols; ++c) {
 				retVal.get(c)[r] = values[c];
 			}
@@ -163,15 +164,6 @@ public class SoftCluster extends Cluster {
 	}
 	
 	/**
-   * A cluster's quality is related to the the probability that 
-   * 
-   *   quality = sum(score(x_i)) * (1/product(stdev_i)),
-   *   
-   * where,
-   *   score(x_i) = the score the i-th point in the data set achieves
-   *                for this cluster. 
-   *   stdev_i = the standard deviation of the i-th dimension of this cluster.
-   *   
    * @return The quality of the calling SoftCluster.
    */
   public double quality() {
@@ -183,8 +175,8 @@ public class SoftCluster extends Cluster {
       return m_score; // return the cached value
     }
     
-    for (DataPoint pt : m_dataSet) {
-      m_objScore[count] = score(pt.instance); 
+    for (Instance i : m_dataSet) {
+      m_objScore[count] = score(i); 
       sumProbs += m_objScore[count];
       count++;
     }
@@ -195,15 +187,15 @@ public class SoftCluster extends Cluster {
   
   /**
    * 
-   * @param pt
-   * @return
+   * @param i
+   * @return 
    */
   public double score(Instance i) {
     double exponent = 0.0;
     double retVal = 0.0;
     
     for (int j = 0; j < m_center.length; j++) {
-      exponent +=  score(i.getElement(j), j);
+      exponent +=  score(i.value(j), j);
     }
     retVal = Math.exp(exponent);
     

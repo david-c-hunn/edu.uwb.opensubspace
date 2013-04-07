@@ -7,7 +7,8 @@
 #
 
 # non-algorithm specific settings
-dbs="Databases/synth_dbsizescale/*.arff Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff"
+# dbs="Databases/synth_dbsizescale/*.arff Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff"
+dbs="Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff"
 metrics="Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA"
 
 # the algorithm
@@ -34,7 +35,7 @@ echo "Running evaluations for ${clusterer}"
 for db in $dbs; do
 	for in_file in $db;	do
 		true_file=${in_file/arff/true}
-		outfile="output/doc-synth"
+		outfile="output/${clusterer}-synth"
 		echo "Starting evaluation of ${in_file}"
 		ALPHA=0.001  # initialize
 		for i in {1..3}; do
@@ -44,7 +45,7 @@ for db in $dbs; do
 				for kk in {1..6}; do
 					W=50 # initialize
 					for l in {1..3}; do
-						echo "Running ${clusterer} with ALPHA=${ALPHA}, BETA=${BETA}, K=${K}, and W=${W}"
+						echo "$(date): Running ${clusterer} with ALPHA=${ALPHA}, BETA=${BETA}, K=${K}, and W=${W}"
 						java -Xmx1024m -jar evaluator.jar -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -timelimit 30 -a $ALPHA -b $BETA -m $MAXITER -k $K -w $W -outfile $outfile
 						W="$(echo "$W * $W_OFFSET" | bc)"
 					done
@@ -54,7 +55,7 @@ for db in $dbs; do
 			done
 			ALPHA="$(echo "$ALPHA * $ALPHA_OFFSET" | bc)"
 		done
-		echo "Finished evaluation of ${in_file}..." 
+		echo "$(date): Finished evaluation of ${in_file}..." 
 	done
 done
 echo "$(date): Finished evaluation of all synthetic data sets for ${clusterer}"

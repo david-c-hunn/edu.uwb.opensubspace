@@ -41,8 +41,8 @@ for in_file in $db; do
 	for i in {1..3}; do
 		BETA=0.2 # initialize
 		for j in {1..4}; do
-			W=5  # initialize
-			for l in {1..3}; do
+			W=30  # initialize, 5 is the original setting here
+			for l in {1..1}; do # originally 1..3, I changed it to check a larger w
 				echo "$(date): Running ${clusterer} with ALPHA=${ALPHA} BETA=${BETA}, W=${W}"
 				java -Xmx1024m -jar evaluator.jar -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -timelimit 30 -a $ALPHA -b $BETA -w $W -e $EPSILON -m $MU_0 -n 0 -s $MIN_SUBSPACE -x true >> $outfile
 				

@@ -6,7 +6,8 @@
 # Purpose:   This is a bash shell script to run parameter tuning on MINECLUS.
 
 # non-algorithm specific settings
-dbs="Databases/synth_dbsizescale/*.arff Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff"
+# dbs="Databases/synth_dbsizescale/*.arff Databases/synth_dimscale/*.arff Databases/synth_noisescale/*.arff" 
+dbs="Databases/synth_noisescale/*.arff"
 metrics="Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA"
 
 # the algorithm		
@@ -34,7 +35,7 @@ echo "Running evaluations for ${clusterer}"
 for db in $dbs; do
 	for in_file in $db; do
 		true_file=${in_file/arff/true}
-		outfile="output/${clusterer}-synth"
+		outfile="output/${clusterer}-noise"
 		echo "Starting evaluation of ${in_file}..."
 		ALPHA=0.001  # initialize
 		for i in {1..3}; do

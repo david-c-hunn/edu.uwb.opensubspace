@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import org.apache.commons.math3.util.ArithmeticUtils;
+
 
 /**
  * 
@@ -170,7 +172,35 @@ public class SEPC {
 		return maxOverlap;
 	}
 
-	public void setMaxOverlap(double maxOverlap) {
+	/**
+   * @return the k
+   */
+  public int getK() {
+    return k;
+  }
+
+  /**
+   * @param k the k to set
+   */
+  public void setK(int k) {
+    this.k = k;
+  }
+
+  /**
+   * @return the s
+   */
+  public int getS() {
+    return s;
+  }
+
+  /**
+   * @param s the s to set
+   */
+  public void setS(int s) {
+    this.s = s;
+  }
+  
+  public void setMaxOverlap(double maxOverlap) {
 		if (maxOverlap >= 0.0 && maxOverlap < 1.0) {
 			this.maxOverlap = maxOverlap;
 		} else {
@@ -394,12 +424,17 @@ public class SEPC {
 			final double anEpsilon, final int anS, 
 			final int aNumInstances, final int aNumDims) {
 		int m = (int)Math.ceil(anAlpha * aNumInstances);
+		System.out.println(m);
 		int l = (int)Math.floor(aBeta * m);
-		double firstTerm = choose(m, anS).doubleValue() 
-				/ choose(aNumInstances, anS).doubleValue(); 
-		double secondTerm = choose(l, anS).doubleValue()
-				/ choose(m, anS).doubleValue();
+		System.out.println(l);
+		double firstTerm = (double)choose(m, anS) 
+				             / (double)choose(aNumInstances, anS); 
+		System.out.println(firstTerm);
+		double secondTerm = (double)choose(l, anS)
+				              / (double)choose(m, anS);
+		System.out.println(secondTerm);
 		double Ptrial =  firstTerm * (Math.pow(1.0 - secondTerm, aNumDims));
+		System.out.println(Ptrial);
 		int retVal = (int)Math.round(Math.log10(anEpsilon) 
 				/ Math.log10(1 - Ptrial));
 
@@ -414,14 +449,19 @@ public class SEPC {
 	 * @param K
 	 * @return
 	 */
-	private static BigInteger choose(final int N, final int K) {
-		BigInteger ret = BigInteger.ONE;
-
-		for (int k = 0; k < K; k++) {
-			ret = ret.multiply(BigInteger.valueOf(N-k))
-					.divide(BigInteger.valueOf(k+1));
-		}
-		return ret;
+	private static long choose(final int N, final int K) {
+		long answer = ArithmeticUtils.binomialCoefficient(N, K);
+	  BigInteger a = new BigInteger("3");
+	  BigInteger b = new BigInteger("2");
+	  BigInteger c = a.divide(b);
+//	  BigInteger ret = BigInteger.ONE;
+//
+//		for (int k = 0; k < K; k++) {
+//			ret = ret.multiply(BigInteger.valueOf(N-k))
+//					.divide(BigInteger.valueOf(k+1));
+//		}
+//		assert(answer == ret.intValue());
+		return answer;
 	}
 
 	/**

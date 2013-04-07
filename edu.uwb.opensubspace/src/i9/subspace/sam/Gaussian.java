@@ -1,4 +1,4 @@
-package i9.subspace.sepc;
+package i9.subspace.sam;
 
 /**
  * Compilation:  javac Gaussian.java

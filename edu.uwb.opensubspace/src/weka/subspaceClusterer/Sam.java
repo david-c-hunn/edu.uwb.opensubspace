@@ -1,7 +1,7 @@
 package weka.subspaceClusterer;
 
 import i9.subspace.base.ArffStorage;
-import i9.subspace.sepc.SASC;
+import i9.subspace.sam.SAM;
 
 import java.util.Enumeration;
 import java.util.Vector;
@@ -12,7 +12,7 @@ import weka.core.OptionHandler;
 import weka.core.Utils;
 
 
-public class Sasc extends SubspaceClusterer implements OptionHandler {
+public class Sam extends SubspaceClusterer implements OptionHandler {
 	private static final long serialVersionUID = 5624336775621682596L;
 	private double alpha       = 0.08;  // min cluster density
 	private double beta        = 0.25;  // trade-off between num dims and num instances
@@ -29,7 +29,7 @@ public class Sasc extends SubspaceClusterer implements OptionHandler {
 	public void buildSubspaceClusterer(Instances data) throws Exception {
 		ArffStorage arffstorage = new ArffStorage(data);
 		int maxUnmatchedSubspaces = (int)Math.round((data.numAttributes() - 1) * dimOverlap);
-		SASC s = new SASC(alpha, beta, epsilon, mu_0, numClusters, w, maxOverlap, 
+		SAM s = new SAM(alpha, beta, epsilon, mu_0, numClusters, w, maxOverlap, 
 				          maxUnmatchedSubspaces, minSubspaceSize, disjointMode, arffstorage);
 		setSubspaceClustering(s.findClusters());
 		toString();
@@ -250,7 +250,7 @@ public class Sasc extends SubspaceClusterer implements OptionHandler {
 
 	@Override
 	public String getName() {
-		return "SASC";
+		return "SAM";
 	}
 
 	@Override
@@ -263,7 +263,7 @@ public class Sasc extends SubspaceClusterer implements OptionHandler {
 	}
 
 	public static void main (String[] argv) {
-		runSubspaceClusterer(new Sasc(), argv);
+		runSubspaceClusterer(new Sam(), argv);
 	}
 
 // TODO: Figure out how to use this feature	

@@ -54,7 +54,7 @@ for db in $dbs; do
 			done
 			ALPHA="$(echo "$ALPHA * $ALPHA_OFFSET" | bc)"
 		done
-		echo "Finished evaluation of ${in_file}..." 
+		echo "$(date): Finished evaluation of ${in_file}..." 
 	done
 done
 echo "$(date): Finished evaluation of all synthetic data sets for ${clusterer}"
