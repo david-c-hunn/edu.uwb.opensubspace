@@ -2,7 +2,6 @@
 
 package i9.subspace.sam;
 import i9.data.core.DataSet;
-//import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
 
 import java.util.ArrayList;
@@ -65,6 +64,8 @@ public class SoftCluster extends Cluster {
 	/** Used to calculate sample standard deviation (uses n-1) along a dimension. */
 	private static final StandardDeviation m_stdDevCalc = new StandardDeviation();
 	
+	/** The distance function the cluster will use. */
+	private Distance m_distance = null;
 	
 	public double[] center() {
     return m_center;
@@ -86,6 +87,7 @@ public class SoftCluster extends Cluster {
 	  this.m_objScore = Arrays.copyOf(other.m_objScore, other.m_objScore.length);
 	  this.m_dataSet = other.m_dataSet;
 	  this.m_lambda = other.m_lambda;
+	  this.m_distance = other.m_distance;
 	}
 	
 	/**

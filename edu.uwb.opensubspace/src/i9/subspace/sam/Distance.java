@@ -7,18 +7,9 @@ package i9.subspace.sam;
  * @author dave
  *
  */
-public abstract class Distance {
-
-  public static double calc(double[] a, double[] b) {
-    return 0;
-  }
-  
-  /**
-   * @param args
-   */
-  public static void main(String[] args) {
-    // TODO Auto-generated method stub
-
-  }
-
+public interface Distance {
+  public int compare(double dist1, double dist2);
+  public double calc(double[] a, double[] b);
+  public double calc(double[] a, double[] b, double[] spread);
+  public double calc(double[] a, double[] b, double[] spread, double[] weights);
 }

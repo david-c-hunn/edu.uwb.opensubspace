@@ -229,7 +229,7 @@ public class SAM {
     }
 
     // assign points to the cluster they score highest with
-    for (int i = 0; i < m_data.size(); i++) {
+    for (int i = 0; i < m_dataSet.getInstanceCount(); i++) {
       SoftCluster best = (SoftCluster) m_clusters.get(0);
 
       for (Cluster c : m_clusters) {
@@ -291,10 +291,10 @@ public class SAM {
    */
   private SoftCluster buildCluster() {
     List<Integer> samp = randomSample(m_sampleSize);
-    SoftCluster c = new SoftCluster(new boolean[m_data.getNumDimensions()], 
+    SoftCluster c = new SoftCluster(new boolean[m_dataSet.getNumDimensions()], 
                                     new ArrayList<Integer>());
 
-    c.calc(samp, m_data);
+    c.calc(samp, m_dataSet);
 
     return c;
   }
