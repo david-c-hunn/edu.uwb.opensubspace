@@ -43,7 +43,7 @@ public class SquaredDifference implements Distance {
   }
 
   @Override
-  public double calc(double[] a, double[] b, double[] spread, double[] weights) {
+  public double calc(double[] a, double[] b, double[] spread, double[] weight, double lambda) {
     double dist = 0.0;
     
     for (int i = 0; i < b.length; ++i) {

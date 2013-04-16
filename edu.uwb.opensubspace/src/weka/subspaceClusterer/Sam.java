@@ -14,23 +14,16 @@ import weka.core.Utils;
 
 public class Sam extends SubspaceClusterer implements OptionHandler {
 	private static final long serialVersionUID = 5624336775621682596L;
-	private double alpha       = 0.08;  // min cluster density
-	private double beta        = 0.25;  // trade-off between num dims and num instances
-	private double epsilon     = 0.05;  // chance of failing to find a cluster
-	private double mu_0        = 1;     // minimum cluster quality
-	private int    numClusters = 0;     // number of clusters to find, <= 0 leaves it up to SEPC
-	private double w           = 100.0; // minimum cluster width
-	private double maxOverlap  = 0.50;  // the maximum number of clusters points that may overlap another cluster in the same subspace
-	private double dimOverlap  = 0.20; 
-	private double minSubspaceSize = 0.5;
-	private boolean disjointMode = true;
+	private double m_alpha       = 0.01;  // min cluster density
+	private double m_beta        = 0.25;  // trade-off between num dims and num instances
+	private double m_epsilon     = 0.01;  // chance of failing to find a cluster
+	private int    m_numClusters = 0;     // number of clusters to find, <= 0 leaves it up to SEPC
+	
 	
 	@Override
 	public void buildSubspaceClusterer(Instances data) throws Exception {
 		ArffStorage arffstorage = new ArffStorage(data);
-		int maxUnmatchedSubspaces = (int)Math.round((data.numAttributes() - 1) * dimOverlap);
-		SAM s = new SAM(alpha, beta, epsilon, mu_0, numClusters, w, maxOverlap, 
-				          maxUnmatchedSubspaces, minSubspaceSize, disjointMode, arffstorage);
+		SAM s = new SAM(m_alpha, m_beta, m_epsilon, m_numClusters, arffstorage);
 		setSubspaceClustering(s.findClusters());
 		toString();
 	}
@@ -44,15 +37,15 @@ public class Sam extends SubspaceClusterer implements OptionHandler {
 	public Enumeration listOptions() {
 		Vector vector = new Vector();
 
-		vector.addElement(new Option("\talpha (default = 0.08)", "alpha", 1,
+		vector.addElement(new Option("\talpha (default = 0.08)", "m_alpha", 1,
 				"-a <double>"));
-		vector.addElement(new Option("\tbeta (default = 0.35)", "beta", 1,
+		vector.addElement(new Option("\tbeta (default = 0.35)", "m_beta", 1,
 				"-b <double>"));
-		vector.addElement(new Option("\tepsilon (default = 0.05)", "epsilon", 1,
+		vector.addElement(new Option("\tepsilon (default = 0.05)", "m_epsilon", 1,
 				"-e <double>"));
 		vector.addElement(new Option("\tmu_0 (default = 1,000,000)", "mu_0", 1,
 				"-m <double>"));
-		vector.addElement(new Option("\tnumClusters (default = 0)", "numClusters", 1,
+		vector.addElement(new Option("\tnumClusters (default = 0)", "m_numClusters", 1,
 				"-n <int>"));
 		vector.addElement(new Option("\twidth (default = 100.0)", "width", 1,
 				"-w <double>"));
@@ -69,55 +62,31 @@ public class Sam extends SubspaceClusterer implements OptionHandler {
 	}
 
 	public void setOptions(String[] options) throws Exception {
-		String optionString = Utils.getOption("a", options);
+		String optionString = Utils.getOption("m_alpha", options);
+		
 		if (optionString.length() != 0) {
 			setAlpha(Double.parseDouble(optionString));
 		}
 		
-		optionString = Utils.getOption("b", options);
+		optionString = Utils.getOption("m_beta", options);
 		if (optionString.length() != 0) {
 			setBeta(Double.parseDouble(optionString));
 		}
 		
-		optionString = Utils.getOption("e", options);
+		optionString = Utils.getOption("m_epsilon", options);
 		if (optionString.length() != 0) {
 			setEpsilon(Double.parseDouble(optionString));
 		}
-		
-		optionString = Utils.getOption("m", options);
-		if (optionString.length() != 0) {
-			setMu_0(Double.parseDouble(optionString));
-		}
-		
-		optionString = Utils.getOption("n", options);
+				
+		optionString = Utils.getOption("m_numClusters", options);
 		if (optionString.length() != 0) {
 			setNumClusters(Integer.parseInt(optionString));
 		}
 		
-		optionString = Utils.getOption("w", options);
-		if (optionString.length() != 0) {
-			setW(Double.parseDouble(optionString));
-		}
-		
-		optionString = Utils.getOption("o", options);
-		if (optionString.length() != 0) {
-			setMaxOverlap(Double.parseDouble(optionString));
-		}
-		
-		optionString = Utils.getOption("d", options);
-		if (optionString.length() != 0) {
-			setDimOverlap(Double.parseDouble(optionString));
-		}
-		
-		optionString = Utils.getOption("s", options);
-		if (optionString.length() != 0) {
-			setMinSubspaceSize(Double.parseDouble(optionString));
-		}
-		
-		optionString = Utils.getOption("x", options);
-		if (optionString.length() != 0) {
-			setDisjointMode(Boolean.parseBoolean(optionString));
-		}
+		optionString = Utils.getOption("distance", options);
+    if (optionString.length() != 0) {
+      
+    }
 	}
 
 	/**
@@ -127,125 +96,58 @@ public class Sam extends SubspaceClusterer implements OptionHandler {
 	 *                  strings
 	 */
 	public String[] getOptions() {
-		String[] options = new String[20]; // = 2 * the number of arguments
+		String[] options = new String[8]; // = 2 * the number of arguments
 		int current = 0;
 
-		options[current++] = "-a";
-		options[current++] = "" + alpha;
-		options[current++] = "-b";
-		options[current++] = "" + beta;
-		options[current++] = "-e";
-		options[current++] = "" + epsilon;
-		options[current++] = "-m";
-		options[current++] = "" + mu_0;
-		options[current++] = "-n";
-		options[current++] = "" + numClusters;
-		options[current++] = "-w";
-		options[current++] = "" + w;
-		options[current++] = "-o";
-		options[current++] = "" + maxOverlap;
-		options[current++] = "-d";
-		options[current++] = "" + dimOverlap;
-		options[current++] = "-s";
-		options[current++] = "" + minSubspaceSize;
-		options[current++] = "-x";
-		options[current++] = "" + disjointMode;
+		options[current++] = "-alpha";
+		options[current++] = "" + m_alpha;
+		options[current++] = "-beta";
+		options[current++] = "" + m_beta;
+		options[current++] = "-epsilon";
+		options[current++] = "" + m_epsilon;
+		options[current++] = "-numClusters";
+		options[current++] = "" + m_numClusters;
 		
 		return options;
 	}
 
 	public String globalInfo() {
-		return "Simple and Efficient Projective Clustering (SEPC): A Monte "
-			 + "Carlo algorithm that performs trials that sample a small "
-			 + "subset of the data points to determine the dimensions in which "
-			 + "the points are sufficiently close to form a cluster and then "
-			 + "searches the rest of the data for data points that are part of "
-			 + "the cluster.";
+		return "Monte Carlo Subspace Clustering with Soft Assignment.";
 	}
 
 	public double getAlpha() {
-		return alpha;
+		return m_alpha;
 	}
 
 	public void setAlpha(double alpha) {
 		if (alpha > 0.0 && alpha < 1.0)
-			this.alpha = alpha;
+			this.m_alpha = alpha;
 	}
 
 	public double getBeta() {
-		return beta;
+		return m_beta;
 	}
 
 	public void setBeta(double beta) {
 		if (beta > 0.0 && beta < 1.0)
-			this.beta = beta;
+			this.m_beta = beta;
 	}
 
 	public double getEpsilon() {
-		return epsilon;
+		return m_epsilon;
 	}
 
 	public void setEpsilon(double epsilon) {
 		if (epsilon > 0.0 && epsilon < 1.0)
-			this.epsilon = epsilon;
-	}
-
-	public double getMu_0() {
-		return mu_0;
-	}
-
-	public void setMu_0(double mu_0) {
-		this.mu_0 = mu_0;
+			this.m_epsilon = epsilon;
 	}
 
 	public int getNumClusters() {
-		return numClusters;
+		return m_numClusters;
 	}
 
 	public void setNumClusters(int numClusters) {
-		this.numClusters = numClusters;
-	}
-
-	public double getW() {
-		return w;
-	}
-
-	public void setW(double w) {
-		if (w > 0.0)
-			this.w = w;
-	}
-
-	public double getMaxOverlap() {
-		return maxOverlap;
-	}
-
-	public void setMaxOverlap(double maxOverlap) {
-		this.maxOverlap = maxOverlap;
-	}
-
-	public double getDimOverlap() {
-		return dimOverlap;
-	}
-
-	public void setDimOverlap(double dimOverlap) {
-		if (dimOverlap > 0.0)
-			this.dimOverlap = dimOverlap;
-	}
-
-	public double getMinSubspaceSize() {
-		return minSubspaceSize;
-	}
-
-	public void setMinSubspaceSize(double minSubspaceSize) {
-		this.minSubspaceSize = minSubspaceSize;
-	}
-
-	public boolean isDisjointMode() {
-		return disjointMode;
-	}
-
-	public void setDisjointMode(boolean disjointMode) {
-		this.disjointMode = disjointMode;
+		this.m_numClusters = numClusters;
 	}
 
 	@Override
@@ -255,11 +157,8 @@ public class Sam extends SubspaceClusterer implements OptionHandler {
 
 	@Override
 	public String getParameterString() {
-		return "alpha=" + alpha + "; beta=" + beta + 
-		       "; epsilon=" + epsilon + "; mu_0=" + mu_0 + 
-		       "; numClusters=" + numClusters +"; w=" + w +
-		       "; maxOverlap=" + maxOverlap + "; minSubspaceSize=" + minSubspaceSize +
-		       "; disjointMode=" + disjointMode;
+		return "alpha=" + m_alpha + "; beta=" + m_beta + "; epsilon=" + m_epsilon  + 
+		       "; numClusters=" + m_numClusters;
 	}
 
 	public static void main (String[] argv) {

@@ -292,7 +292,7 @@ public class SAM {
   private SoftCluster buildCluster() {
     List<Integer> samp = randomSample(m_sampleSize);
     SoftCluster c = new SoftCluster(new boolean[m_dataSet.getNumDimensions()], 
-                                    new ArrayList<Integer>());
+                                    new ArrayList<Integer>(), m_dataSet, );
 
     c.calc(samp, m_dataSet);
 

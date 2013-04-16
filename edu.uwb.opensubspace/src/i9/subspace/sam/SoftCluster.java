@@ -95,13 +95,13 @@ public class SoftCluster extends Cluster {
 	 * @param subspace
 	 * @param objects
 	 */
-	public SoftCluster(boolean[] subspace, List<Integer> objects, DataSet data) {
+	public SoftCluster(boolean[] subspace, List<Integer> objects, DataSet data, Distance d) {
 		super(subspace, objects);
 		m_center = new double[subspace.length];
 		m_spread = new double[subspace.length];
 		m_weights = new double[subspace.length];
 		m_dataSet = data;
-		
+		m_distance = d;
 	}
 	
 	/**
@@ -169,7 +169,7 @@ public class SoftCluster extends Cluster {
    * @return The quality of the calling SoftCluster.
    */
   public double quality() {
-    double sumProbs = 0.0;   // sum of the probabilities over all pts
+    double sumDist = 0.0;   // sum of the probabilities over all pts
     double prodStdevs = 1.0; // the product of the std dev in each dimension
     int count = 0;      
     
@@ -178,11 +178,10 @@ public class SoftCluster extends Cluster {
     }
     
     for (Instance i : m_dataSet) {
-      m_objScore[count] = score(i); 
-      sumProbs += m_objScore[count];
-      count++;
+      m_objScore[count] = m_distance.calc(i.toDoubleArray(), m_center, m_spread, m_weights, m_lambda); 
+      sumDist += m_objScore[count++];
     }
-    m_score = sumProbs / prodStdevs;
+    m_score = sumDist / prodStdevs;
     
     return m_score;
   }
