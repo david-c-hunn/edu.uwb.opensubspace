@@ -17,6 +17,6 @@ java -jar Evaluator.jar
 
 This should spit out a help message that tells you what arguments to pass in order to run an evaluation of an algorithm on a given data set. For example,
 
-java -Xmx1024m -jar evaluator.jar -sc Secp -t Databases/synth_dbsizescale/S1500.arff -T Databases/synth_dbsizescale/S1500.true -c last -M Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA -timelimit 30 -a 0.05 -b 0.3 -w 100 -e 0.01 -m 0 -n 0 -s 0.5 -x true 
+java -Xmx1024m -jar evaluator.jar -sc Sepc -t Databases/synth_dbsizescale/S1500.arff -T Databases/synth_dbsizescale/S1500.true -c last -M Accuracy:CE:ClusterDistribution:Coverage:Entropy:F1Measure:RNIA -timelimit 30 -a 0.05 -b 0.3 -w 100 -e 0.01 -m 0 -n 0 -s 0.5 -x true 
 
 Will run SEPC on one of the synthetic data sets and calculate all of the metrics (the results are going to be written to standard out).
