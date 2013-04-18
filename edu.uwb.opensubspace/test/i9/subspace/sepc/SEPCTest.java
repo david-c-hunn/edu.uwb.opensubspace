@@ -53,7 +53,7 @@ public class SEPCTest {
                          true,   /* disjointMode */ 
                          arff    /* dbStorage */  );
     int k = sepc.getK();
-    assertEquals("k should be ", 142886, k);
+    assertEquals("k should be ", 143245, k);
   }
   
   @Test

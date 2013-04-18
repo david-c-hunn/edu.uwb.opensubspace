@@ -1,7 +1,7 @@
 package weka.subspaceClusterer;
 
 import i9.subspace.base.ArffStorage;
-import i9.subspace.sam.SAM;
+import i9.subspace.sarc.SAM;
 
 import java.util.Enumeration;
 import java.util.Vector;
@@ -12,7 +12,7 @@ import weka.core.OptionHandler;
 import weka.core.Utils;
 
 
-public class Sam extends SubspaceClusterer implements OptionHandler {
+public class Sarc extends SubspaceClusterer implements OptionHandler {
 	private static final long serialVersionUID = 5624336775621682596L;
 	private double m_alpha       = 0.01;  // min cluster density
 	private double m_beta        = 0.25;  // trade-off between num dims and num instances
@@ -23,8 +23,8 @@ public class Sam extends SubspaceClusterer implements OptionHandler {
 	@Override
 	public void buildSubspaceClusterer(Instances data) throws Exception {
 		ArffStorage arffstorage = new ArffStorage(data);
-		SAM s = new SAM(m_alpha, m_beta, m_epsilon, m_numClusters, arffstorage);
-		setSubspaceClustering(s.findClusters());
+//		SARC s = new SARC(m_alpha, m_beta, m_epsilon, m_numClusters, arffstorage);
+//		setSubspaceClustering(s.findClusters());
 		toString();
 	}
 
@@ -162,7 +162,7 @@ public class Sam extends SubspaceClusterer implements OptionHandler {
 	}
 
 	public static void main (String[] argv) {
-		runSubspaceClusterer(new Sam(), argv);
+		runSubspaceClusterer(new Sarc(), argv);
 	}
 
 // TODO: Figure out how to use this feature	

@@ -418,49 +418,31 @@ public class SEPC {
 	 * @param anS
 	 * @param aNumInstances
 	 * @param aNumDims
-	 * @return
+	 * @return The optimal number of trials given the passed data.
 	 */
 	private static int calcNumTrials(final double anAlpha, final double aBeta, 
 			final double anEpsilon, final int anS, 
 			final int aNumInstances, final int aNumDims) {
-		int m = (int)Math.ceil(anAlpha * aNumInstances);
-		System.out.println(m);
+		
+	  int m = (int)Math.ceil(anAlpha * aNumInstances);
 		int l = (int)Math.floor(aBeta * m);
-		System.out.println(l);
-		double firstTerm = (double)choose(m, anS) 
-				             / (double)choose(aNumInstances, anS); 
-		System.out.println(firstTerm);
-		double secondTerm = (double)choose(l, anS)
-				              / (double)choose(m, anS);
-		System.out.println(secondTerm);
+		double firstTerm = (double)choose(m, anS) / (double)choose(aNumInstances, anS); 
+		double secondTerm = (double)choose(l, anS) / (double)choose(m, anS);
 		double Ptrial =  firstTerm * (Math.pow(1.0 - secondTerm, aNumDims));
-		System.out.println(Ptrial);
-		int retVal = (int)Math.round(Math.log10(anEpsilon) 
-				/ Math.log10(1 - Ptrial));
+		int retVal = (int)Math.round(Math.log10(anEpsilon) / Math.log10(1.0 - Ptrial));
 
 		return retVal;
 	}
 
 	/**
-	 * Code obtained from: 
-	 * http://stackoverflow.com/questions/2201113/combinatoric-n-choose-r-in-java-math
 	 * 
 	 * @param N
 	 * @param K
-	 * @return
+	 * @return N choose K.
 	 */
 	private static long choose(final int N, final int K) {
 		long answer = ArithmeticUtils.binomialCoefficient(N, K);
-	  BigInteger a = new BigInteger("3");
-	  BigInteger b = new BigInteger("2");
-	  BigInteger c = a.divide(b);
-//	  BigInteger ret = BigInteger.ONE;
-//
-//		for (int k = 0; k < K; k++) {
-//			ret = ret.multiply(BigInteger.valueOf(N-k))
-//					.divide(BigInteger.valueOf(k+1));
-//		}
-//		assert(answer == ret.intValue());
+	  
 		return answer;
 	}
 

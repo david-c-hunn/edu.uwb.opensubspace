@@ -1,7 +1,7 @@
 /**
  * 
  */
-package i9.subspace.sam;
+package i9.subspace.sarc;
 
 import weka.core.Instance;
 
@@ -10,7 +10,7 @@ import weka.core.Instance;
  * @author dave
  *
  */
-public class NormalPDFDistance implements i9.subspace.sam.Distance {
+public class NormalPDFDistance implements i9.subspace.sarc.Distance {
   
   /**
    * @return -1 if dist1 is worse than dist2, 1 if dist1 is better than dist2,

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package i9.subspace.sam;
+package i9.subspace.sarc;
 
 /**
  * @author dave
@@ -10,7 +10,7 @@ package i9.subspace.sam;
 public class NegativeEntropyNormalPDFDistance implements Distance {
   
   /* (non-Javadoc)
-   * @see i9.subspace.sam.Distance#compare(double, double)
+   * @see i9.subspace.sarc.Distance#compare(double, double)
    */
   @Override
   public int compare(double dist1, double dist2) {
@@ -19,7 +19,7 @@ public class NegativeEntropyNormalPDFDistance implements Distance {
   }
 
   /* (non-Javadoc)
-   * @see i9.subspace.sam.Distance#calc(double[], double[])
+   * @see i9.subspace.sarc.Distance#calc(double[], double[])
    */
   @Override
   public double calc(double[] a, double[] b) {
@@ -28,7 +28,7 @@ public class NegativeEntropyNormalPDFDistance implements Distance {
   }
 
   /* (non-Javadoc)
-   * @see i9.subspace.sam.Distance#calc(double[], double[], double[])
+   * @see i9.subspace.sarc.Distance#calc(double[], double[], double[])
    */
   @Override
   public double calc(double[] a, double[] b, double[] spread) {
@@ -37,7 +37,7 @@ public class NegativeEntropyNormalPDFDistance implements Distance {
   }
 
   /* (non-Javadoc)
-   * @see i9.subspace.sam.Distance#calc(double[], double[], double[], double[], double)
+   * @see i9.subspace.sarc.Distance#calc(double[], double[], double[], double[], double)
    */
   @Override
   public double calc(double[] a, double[] b, double[] spread, double[] weight, double lambda) {

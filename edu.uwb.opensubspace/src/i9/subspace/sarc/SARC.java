@@ -1,13 +1,12 @@
 /*
- *    SAM.java
+ *    SARC.java
  *    Copyright (C) 2013 Dave Hunn
  *
  */
 
-package i9.subspace.sam;
+package i9.subspace.sarc;
 import i9.data.core.DBStorage;
 import i9.data.core.DataSet;
-import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
 
 import java.math.BigInteger;
@@ -19,13 +18,13 @@ import java.util.Set;
 
 
 /**
- * An implementation of the S.oft A.ssignemt M.onte Carlo subspace clustering
- * algorithm (SAM). 
+ * An implementation of the S.oft A.ssignemt R.andomized Clustering 
+ * algorithm (SARC). 
  *  
  * @author Dave Hunn
  * @version 0.5
  */
-public class SAM {
+public class SARC {
   
   /** Stores the data set as an ArrayList to get random access for sampling. */
   private DataSet m_dataSet = null;                
@@ -158,7 +157,7 @@ public class SAM {
    * @param numClusters
    * @param dbStorage
    */
-  public SAM (double alpha, double beta, double epsilon, int numClusters,     
+  public SARC (double alpha, double beta, double epsilon, int numClusters,     
               DBStorage dbStorage) {
     int numDims = dbStorage.getDataSet().getNumDimensions();
     int numObjects = dbStorage.getDataSet().getInstanceCount();
@@ -172,7 +171,7 @@ public class SAM {
     setDataSet(dbStorage);
     setSampleSize(calcDiscrimSetSize(numDims, m_beta));
     setNumTrials(calcNumTrials(m_alpha, m_beta, m_epsilon, m_sampleSize, 
-                                     numObjects, numDims));
+                               numObjects, numDims));
   }
 
   /**
@@ -292,9 +291,9 @@ public class SAM {
   private SoftCluster buildCluster() {
     List<Integer> samp = randomSample(m_sampleSize);
     SoftCluster c = new SoftCluster(new boolean[m_dataSet.getNumDimensions()], 
-                                    new ArrayList<Integer>(), m_dataSet, );
+                                    new ArrayList<Integer>(), m_dataSet, null);
 
-    c.calc(samp, m_dataSet);
+    c.calc(samp);
 
     return c;
   }
@@ -424,7 +423,7 @@ public class SAM {
    */
   private List<Integer> randomSample(final int sampSize) {
     Set<Integer> sample = new HashSet<Integer>(sampSize);
-    int numInstances = m_data.numInstances();
+    int numInstances = m_dataSet.numInstances();
     int position;
 
     while (sample.size() < sampSize) {
