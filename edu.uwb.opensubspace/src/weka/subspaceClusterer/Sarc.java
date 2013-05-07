@@ -1,7 +1,7 @@
 package weka.subspaceClusterer;
 
 import i9.subspace.base.ArffStorage;
-import i9.subspace.sarc.SAM;
+import i9.subspace.sarc.SARC;
 
 import java.util.Enumeration;
 import java.util.Vector;
@@ -17,14 +17,15 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 	private double m_alpha       = 0.01;  // min cluster density
 	private double m_beta        = 0.25;  // trade-off between num dims and num instances
 	private double m_epsilon     = 0.01;  // chance of failing to find a cluster
+	private double m_minQual     = 1.00;
 	private int    m_numClusters = 0;     // number of clusters to find, <= 0 leaves it up to SEPC
 	
 	
 	@Override
 	public void buildSubspaceClusterer(Instances data) throws Exception {
 		ArffStorage arffstorage = new ArffStorage(data);
-//		SARC s = new SARC(m_alpha, m_beta, m_epsilon, m_numClusters, arffstorage);
-//		setSubspaceClustering(s.findClusters());
+		SARC s = new SARC(m_alpha, m_beta, m_epsilon, m_minQual, m_numClusters, arffstorage);
+		setSubspaceClustering(s.findClusters());
 		toString();
 	}
 
@@ -37,56 +38,51 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 	public Enumeration listOptions() {
 		Vector vector = new Vector();
 
-		vector.addElement(new Option("\talpha (default = 0.08)", "m_alpha", 1,
-				"-a <double>"));
-		vector.addElement(new Option("\tbeta (default = 0.35)", "m_beta", 1,
-				"-b <double>"));
-		vector.addElement(new Option("\tepsilon (default = 0.05)", "m_epsilon", 1,
-				"-e <double>"));
-		vector.addElement(new Option("\tmu_0 (default = 1,000,000)", "mu_0", 1,
-				"-m <double>"));
-		vector.addElement(new Option("\tnumClusters (default = 0)", "m_numClusters", 1,
-				"-n <int>"));
-		vector.addElement(new Option("\twidth (default = 100.0)", "width", 1,
-				"-w <double>"));
-		vector.addElement(new Option("\toverlap (default = 0.50)", "overlap", 1,
-				"-o <double>"));
-		vector.addElement(new Option("\tdimOverlap (default = 0.20)", "dimOverlap", 1,
-				"-d <double>"));
-		vector.addElement(new Option("\tminSubspaceSize (default = 0.50)", "minSubspaceSize", 1,
-				"-s <double>"));
-		vector.addElement(new Option("\tdisjointMode (default = true)", "disjointMode", 1,
-				"-s <double>"));
+		vector.addElement(new Option("\talpha (default = 0.01)", "alpha", 1,
+				"-alpha <double>"));
+		vector.addElement(new Option("\tbeta (default = 0.25)", "beta", 1,
+				"-beta <double>"));
+		vector.addElement(new Option("\tepsilon (default = 0.01)", "epsilon", 1,
+				"-epsilon <double>"));
+		vector.addElement(new Option("\tmu_0 (default = 1.0)", "minQual", 1,
+				"-minQual <double>"));
+		vector.addElement(new Option("\tnumClusters (default = 0)", "numClusters", 1,
+				"-numClusters <int>"));
 		
 		return vector.elements();
 	}
 
 	public void setOptions(String[] options) throws Exception {
-		String optionString = Utils.getOption("m_alpha", options);
+		String optionString = Utils.getOption("alpha", options);
 		
 		if (optionString.length() != 0) {
 			setAlpha(Double.parseDouble(optionString));
 		}
 		
-		optionString = Utils.getOption("m_beta", options);
+		optionString = Utils.getOption("beta", options);
 		if (optionString.length() != 0) {
 			setBeta(Double.parseDouble(optionString));
 		}
 		
-		optionString = Utils.getOption("m_epsilon", options);
+		optionString = Utils.getOption("epsilon", options);
 		if (optionString.length() != 0) {
 			setEpsilon(Double.parseDouble(optionString));
 		}
-				
-		optionString = Utils.getOption("m_numClusters", options);
+		
+		optionString = Utils.getOption("minQual", options);
+    if (optionString.length() != 0) {
+      setMinQual(Double.parseDouble(optionString));
+    }	
+		
+		optionString = Utils.getOption("numClusters", options);
 		if (optionString.length() != 0) {
 			setNumClusters(Integer.parseInt(optionString));
 		}
 		
-		optionString = Utils.getOption("distance", options);
-    if (optionString.length() != 0) {
-      
-    }
+//		optionString = Utils.getOption("distance", options);
+//    if (optionString.length() != 0) {
+//      
+//    }
 	}
 
 	/**
@@ -105,14 +101,17 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 		options[current++] = "" + m_beta;
 		options[current++] = "-epsilon";
 		options[current++] = "" + m_epsilon;
+		options[current++] = "-minQual";
+    options[current++] = "" + m_minQual;
 		options[current++] = "-numClusters";
 		options[current++] = "" + m_numClusters;
+		
 		
 		return options;
 	}
 
 	public String globalInfo() {
-		return "Monte Carlo Subspace Clustering with Soft Assignment.";
+		return "Soft Assginment Randomized Clustering";
 	}
 
 	public double getAlpha() {
@@ -142,7 +141,15 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 			this.m_epsilon = epsilon;
 	}
 
-	public int getNumClusters() {
+	public double getMinQual() {
+    return m_minQual;
+  }
+
+  public void setMinQual(double minQual) {
+    this.m_minQual = minQual;
+  }
+
+  public int getNumClusters() {
 		return m_numClusters;
 	}
 
@@ -152,13 +159,13 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 
 	@Override
 	public String getName() {
-		return "SAM";
+		return "SARC";
 	}
 
 	@Override
 	public String getParameterString() {
 		return "alpha=" + m_alpha + "; beta=" + m_beta + "; epsilon=" + m_epsilon  + 
-		       "; numClusters=" + m_numClusters;
+		       "; minQual=" + m_minQual + "; numClusters=" + m_numClusters;
 	}
 
 	public static void main (String[] argv) {

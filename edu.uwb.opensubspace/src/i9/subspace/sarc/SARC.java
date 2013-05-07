@@ -16,6 +16,8 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import weka.core.Instance;
+
 
 /**
  * An implementation of the S.oft A.ssignemt R.andomized Clustering 
@@ -25,12 +27,14 @@ import java.util.Set;
  * @version 0.5
  */
 public class SARC {
-  
+
   /** Stores the data set as an ArrayList to get random access for sampling. */
   private DataSet m_dataSet = null;                
 
   /**  A list of the discovered clusters. */
   private List<Cluster> m_clusters = null;
+
+  private final Distance m_distance;
 
   /** 
    * The minimum cluster density as a fraction of the total number of objects. 
@@ -62,7 +66,7 @@ public class SARC {
   private int m_sampleSize = 2; 
 
   /** The minimum cluster quality. Also called mu 0. */
-  private double m_minQual = 1048576;  
+  private double m_minQual = 200;  
 
   /** 
    * An optional parameter that allows the user to specify the number of 
@@ -74,6 +78,36 @@ public class SARC {
   /** A random number generator used for sampling the data set. */
   private Random m_RNG;
 
+  /** An array of the global clustering score after each iteration. */
+  private List<Double> m_globalScores;
+
+  /** The current iteration. */
+  private int m_iter = 0;
+
+  /** 
+   * This factor determines when the algorithm has converged. If the 
+   * difference between the current global score and the previous
+   * global score is less than delta, then the algorithm has convered to some
+   * maximum global quality.   
+   */
+  private double m_delta = 2.0;
+
+  /** Show debug messages. */
+  private boolean m_verbose = true;
+
+  public double getGlobalScore() {
+    if (m_iter >= m_globalScores.size()) { // we don't have a cached value for the current iteration
+      double score  = 0.0;
+
+      for (Cluster c : m_clusters) {
+        SoftCluster sc = (SoftCluster) c;
+        score += sc.conditionalQuality();
+      }
+      m_globalScores.add(score);
+    }
+
+    return m_globalScores.get(m_iter);
+  }
 
   public void setDataSet(DBStorage db) {
     m_dataSet = db.getDataSet();
@@ -118,7 +152,7 @@ public class SARC {
   public int getNumClusters() {
     return m_numClusters;
   }
-  
+
   public void setEpsilon(double e) {
     if (e >= 0.0 ) {
       this.m_epsilon = e;
@@ -138,7 +172,7 @@ public class SARC {
   public int getSampleSize() {
     return m_sampleSize;
   }
-  
+
   public void setNumTrials(int n) {
     if (n > 0) { // can't have a negative number of trials.
       this.m_numTrials = n;
@@ -147,8 +181,36 @@ public class SARC {
   public int getNumTrials() {
     return m_numTrials;
   }
-  
-  
+
+  public double getDelta() {
+    return m_delta;
+  }
+
+  public void setDelta(double d) {
+    this.m_delta = d;
+  }
+
+  public void setVerbose(boolean v) {
+    m_verbose = v;
+  }
+  public boolean getVerbose() {
+    return m_verbose;
+  }
+
+  public String getGlobalScoresString() {
+    StringBuilder retVal = new StringBuilder();
+    int idx = 1;
+
+    for (double score : m_globalScores) {
+      retVal.append(idx++);
+      retVal.append(",");
+      retVal.append(score);
+      retVal.append('\n');
+    }
+
+    return retVal.toString();
+  }
+
   /**
    * Constructor.
    * @param alpha
@@ -157,77 +219,118 @@ public class SARC {
    * @param numClusters
    * @param dbStorage
    */
-  public SARC (double alpha, double beta, double epsilon, int numClusters,     
-              DBStorage dbStorage) {
+  public SARC (double alpha, double beta, double epsilon, double minQual,
+      int numClusters, DBStorage dbStorage) {
     int numDims = dbStorage.getDataSet().getNumDimensions();
     int numObjects = dbStorage.getDataSet().getInstanceCount();
-    
+
     m_RNG = new Random();
-    
+
     setAlpha(alpha);
     setBeta(beta);
     setEpsilon(epsilon);
+    setMinQual(minQual);
     setNumClusters(numClusters);
     setDataSet(dbStorage);
     setSampleSize(calcDiscrimSetSize(numDims, m_beta));
     setNumTrials(calcNumTrials(m_alpha, m_beta, m_epsilon, m_sampleSize, 
-                               numObjects, numDims));
+        numObjects, numDims));
+    //TODO: improve this 
+    m_distance = new NormalPDFDistance();
   }
 
-  /**
-   * findClusters
-   * 
-   * @return A list of discovered m_clusters.
+  /** 
+   * @return A list of discovered clusters.
    */
   public List<Cluster> findClusters() {
     SoftCluster   bestCluster    = null;
     SoftCluster   currCluster    = null;
     boolean       searching      = true;
-    int           numClustersFoundLastTry = 0;
-    double        last_total_qual = 0.0;
-    double        this_total_qual = 0.0;
 
     m_clusters = new ArrayList<Cluster>();
-    if (this.m_numClusters > 0)
-      System.out.println("Started clustering: Searching for " + this.m_numClusters + " m_clusters.");
+    m_globalScores = new ArrayList<Double>();
+    m_globalScores.add(0.0); // add zero as first element, so, we don't have to 
+    m_iter = 1;              // check if we are on the first iteration in the 
+    // while loop.
+    if (m_verbose) {
+      if (this.m_numClusters > 0) {
+        System.out.println("Started clustering: Searching for " 
+            + this.m_numClusters + " clusters.");
+      }
+    }
     while (searching) {
       bestCluster = null;
-      for (int trial = 0; trial < getNumTrials(); ++trial) {
+      for (int trial = 0; trial < m_numTrials; ++trial) {
         currCluster = buildCluster();
-        //System.out.println(currCluster.quality());
-        if (! isRedundant(currCluster, 0.0)) {
-          //System.out.println("Current found cluster is redundant, discard and continue.");
-          addCluster(currCluster);
-          //System.out.println("Found new cluster! That'm_sampleSize " + m_clusters.size() + " so far.");
-
-          this_total_qual = 0.0;
-          for (Cluster c : m_clusters) {
-            SoftCluster sc = (SoftCluster) c;
-            this_total_qual += sc.quality();
-          }
-          System.out.print(this_total_qual + ",");
-          //System.out.println("Total quality = " + this_total_qual);
+        m_clusters.add(currCluster);
+        currCluster.quality(); // force quality calc on all objects
+        assignObjectsToClusters();
+        if (m_distance.compare(currCluster.conditionalQuality(), m_minQual) < 0 ) {
+          m_clusters.remove(currCluster);
+          continue; // cluster doesn't meet the minimum criteria
         }
         if (bestCluster == null) {
           bestCluster = currCluster;
-        } else if (bestCluster.quality() > currCluster.quality()) {          
+        } else if (m_distance.compare(bestCluster.conditionalQuality(), 
+            currCluster.conditionalQuality()) < 0 ) {          
+          m_clusters.remove(bestCluster); 
           bestCluster = currCluster;
-        }
+        } else {
+          m_clusters.remove(currCluster);
+        } 
       }
-      if (last_total_qual < this_total_qual) {
-        //TODO: create an object to store the clustering from each iteration
-        searching = false;
-        System.out.println("Quality decreased from the previuos iteration.");
-      } else if (m_clusters.size() <= numClustersFoundLastTry) {
+      assignObjectsToClusters();
+      getGlobalScore();
+      if (Math.abs(m_globalScores.get(m_iter - 1) - m_globalScores.get(m_iter)) <= m_delta) {
+        System.out.println("We have reached the convergence zone!");
+        System.out.println("Found " + m_clusters.size() + " clusters.");
+        //searching = false;
+      } //else {
+      if (m_verbose) {
+        if (bestCluster != null)
+          System.out.println("Best Cluster Quality from this iteration: " + 
+              bestCluster.conditionalQuality());
+      }
+      if (bestCluster == null) {
         searching = false;
       } else {
-        numClustersFoundLastTry = m_clusters.size();
-        searching = stillSearching(bestCluster.quality(), m_clusters.size());
+        searching = stillSearching(bestCluster.conditionalQuality(), m_clusters.size());
       }
-      last_total_qual = this_total_qual;
+      ++m_iter;
     }
 
-    // assign points to the cluster they score highest with
+    int min_size = 0;// (int) (this.alpha * m_data.size());
+    List<Cluster> remove = new ArrayList<Cluster>();
+
+    for (Cluster c : m_clusters) {
+      if (c.m_objects.size() < min_size) {
+        remove.add(c);
+      } else {
+        SoftCluster sc = (SoftCluster) c;
+        sc.setSubspace(0.1);
+        System.out.println(sc.toString());
+        //System.out.print(sc.toString3());
+      }
+
+    }
+    for (Cluster c : remove) {
+      m_clusters.remove(c);
+    }
+
+    System.out.println(getGlobalScoresString());
+
+    return m_clusters;
+  }
+
+  /**
+   * Assigns objects to the cluster they score highest with. Equivalently,
+   * assigns each object to the closest cluster centroid.
+   */
+  private void assignObjectsToClusters() {
+    for (Cluster c : m_clusters) {
+      c.m_objects.clear();
+    }
+
     for (int i = 0; i < m_dataSet.getInstanceCount(); i++) {
       SoftCluster best = (SoftCluster) m_clusters.get(0);
 
@@ -239,27 +342,14 @@ public class SARC {
       }
       best.m_objects.add(i);
     }
-
-    int min_size = 0;// (int) (this.alpha * m_data.size());
-    List<Cluster> remove = new ArrayList<Cluster>();
-
-    for (Cluster c : m_clusters) {
-      if (c.m_objects.size() < min_size) {
-        remove.add(c);
-      } else {
-        SoftCluster sc = (SoftCluster) c;
-        sc.setSubspace(0.03);
-        System.out.println(sc.toString());
-        System.out.print(sc.toString3());
-      }
-
-    }
-    for (Cluster c : remove) {
-      m_clusters.remove(c);
-    }
-    return m_clusters;
   }
 
+  /**
+   * Adds newCluster to the list of discovered clusters in quality order. So,
+   * the highest quality cluster is first in the list and the lowest quality 
+   * cluster is last.
+   * @param newCluster -- A cluster to add to the list of discovered clusters.
+   */
   private void addCluster(SoftCluster newCluster) {
     int idx = 0;
 
@@ -286,12 +376,14 @@ public class SARC {
 
   /**
    * 
-   * @return
+   * @return A SoftCluster.
    */
   private SoftCluster buildCluster() {
     List<Integer> samp = randomSample(m_sampleSize);
     SoftCluster c = new SoftCluster(new boolean[m_dataSet.getNumDimensions()], 
-                                    new ArrayList<Integer>(), m_dataSet, null);
+        new ArrayList<Integer>(), 
+        m_dataSet, 
+        m_distance);
 
     c.calc(samp);
 
@@ -347,7 +439,7 @@ public class SARC {
       System.out.println("mu < m_minQual -> Done searching!");
       return false;
     } else if (m_numClusters > 0 && m_numClusters <= numClustersFound) {
-      System.out.println("Found the designated number of m_clusters -> Done searching!");
+      System.out.println("Found the designated number of clusters -> Done searching!");
       return false;
     }
 
@@ -419,7 +511,7 @@ public class SARC {
    * 
    * @param sampSize The number of instances to include in the sample.
    * 
-   * @return A randomly selected set of instances from the m_data set.
+   * @return A randomly selected set of instances from the m_dataSet.
    */
   private List<Integer> randomSample(final int sampSize) {
     Set<Integer> sample = new HashSet<Integer>(sampSize);

@@ -28,17 +28,17 @@ public class SoftCluster extends Cluster {
 	private DataSet m_dataSet;
 	
 	/** The center the of the cluster */
-	private double[] m_center;
+	public double[] m_center;
 	
 	/** The standard deviation of the cluster along each dimension */
-	private double[] m_spread;
+	public double[] m_spread;
 	
 	/** 
 	 * The weights associated with each attribute (or dimension). The sum of the
 	 * elements of this vector is one.
 	 *  
 	 */
-	private double[] m_weights;
+	public double[] m_weights;
 	
 	/** Calculating quality is computationally expensive, so, it is cached. */
 	private double m_score;
@@ -49,13 +49,13 @@ public class SoftCluster extends Cluster {
 	 * lambda to values less than one (but greater than zero) will cause the 
 	 * weights associated with low spread attributes to dominate.
 	 */
-	private double m_lambda = 50;
+	private double m_lambda = 1.0 / 11.0;
 	
 	/** 
 	 *  Also cache the scores for each object, since, only later are outliers
 	 *  discarded.
 	 */
-	private double[] m_objScore;
+	public double[] m_objScore;
 	
 	/** Used to calculate the mean along a given dimension. */
 	private static final Mean m_meanCalc = new Mean();
@@ -64,20 +64,7 @@ public class SoftCluster extends Cluster {
 	private static final Variance m_varCalc = new Variance();
 	
 	/** The distance function the cluster will use. */
-	private Distance m_distance = null;
-	
-	
-	public double[] objectScores() {
-	  return m_objScore;
-	}
-	
-	public double[] center() {
-    return m_center;
-  }
-  
-  public double[] spread() {
-    return m_spread;
-  }
+	private final Distance m_distance;
   
   public double getLambda() {
     return m_lambda;
@@ -125,7 +112,7 @@ public class SoftCluster extends Cluster {
 	 * @return True all the time. Pretty useful, huh.
 	 */
 	public boolean calc(List<Integer> sample) {
-	  ArrayList<double[]> discSet = transpose(sample);
+	  List<double[]> discSet = transpose(sample);
 		
 	  m_objScore = new double[m_dataSet.getInstanceCount()]; // allocate storage to cache each object score
 		m_score = -1;                                          // Make sure quality is calc'd with next request
@@ -133,9 +120,7 @@ public class SoftCluster extends Cluster {
 		// find the mean and variance along each dimension
 		for (int c = 0; c < discSet.size(); ++c) {
 		  m_center[c] = m_meanCalc.evaluate(discSet.get(c));
-		  m_spread[c] = m_varCalc.evaluate(discSet.get(c), m_center[c])
-		              / Math.sqrt((double)discSet.get(c).length);
-		  // The division calculates an approximate population variance
+		  m_spread[c] = m_varCalc.evaluate(discSet.get(c), m_center[c]);
 		}
 		calcWeights();
 		
@@ -163,8 +148,8 @@ public class SoftCluster extends Cluster {
 	 * @param sample -- The indexes of instances within data to transpose.
 	 * @return A transposed matrix.
 	 */
-	private ArrayList<double[]> transpose(List<Integer> sample) {
-		ArrayList<double[]> retVal = new ArrayList<double[]>();
+	private List<double[]> transpose(List<Integer> sample) {
+		List<double[]> retVal = new ArrayList<double[]>();
 		int cols = m_dataSet.getNumDimensions();
 		int rows = sample.size();
 
@@ -173,7 +158,7 @@ public class SoftCluster extends Cluster {
 		}
 
 		for (int r = 0; r < rows; ++r) {
-		  Instance inst = m_dataSet.instance(1);
+		  Instance inst = m_dataSet.instance(sample.get(r));
 			double values[] = inst.toDoubleArray();
 			
 			for (int c = 0; c < cols; ++c) {
@@ -203,7 +188,23 @@ public class SoftCluster extends Cluster {
     
     return m_score;
   }
+  
+  /**
+   * 
+   * @return The quality of a cluster, calculated using only the points it owns.
+   */
+  public double conditionalQuality() {
+    double ret_val = 0.0;
     
+    this.quality(); // make sure quality has been calc'd on each obj
+    
+    for (int i : m_objects) {
+      ret_val += m_objScore[i];
+    }
+    
+    return ret_val;
+  }
+  
   public double overlap(SoftCluster other) {    
     throw new UnsupportedOperationException("Method not implemented!");
   }
@@ -235,10 +236,6 @@ public class SoftCluster extends Cluster {
    */
   public String toString () {
     StringBuilder retVal = new StringBuilder();
-    double min = Double.MAX_VALUE;
-    double max = Double.MIN_VALUE;
-    double total = 0.0;
-    double avg = 0.0;
     
     retVal.append("[ ");
     for (int i = 0; i < m_weights.length; i++) {
@@ -248,7 +245,8 @@ public class SoftCluster extends Cluster {
     retVal.append(" ] #: " + m_objects.size() + " / ");
     
     for (Integer i : m_objects) {
-      retVal.append(m_objScore[i] + " ");
+      retVal.append(String.format("%.2f", m_objScore[i]));
+      retVal.append(" ");
     }
     
     return retVal.toString();

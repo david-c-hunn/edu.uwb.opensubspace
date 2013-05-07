@@ -34,8 +34,16 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import weka.clusterquality.ClusterQualityMeasure;
+import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.OptionHandler;
@@ -43,6 +51,7 @@ import weka.core.Utils;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
+import weka.filters.unsupervised.instance.Normalize;
 
 /**
  * A class for evaluating subspace clustering models. Most of this code
@@ -363,6 +372,9 @@ public class Evaluator implements Serializable {
    * @param options An array of strings containing options for clustering.
    */
   public String evaluate(String[] options) throws Exception {
+    long start = 0;
+    long end = 0;
+    
     // clear any previous results
     clear();
     // Set options for the Evaluator
@@ -375,16 +387,52 @@ public class Evaluator implements Serializable {
     m_clusteringResults.append(m_clusterer.getName() + "\t");
     m_clusteringResults.append(m_clusterer.getParameterString() + "\t");
     m_clusteringResults.append(m_dataSet.relationName() + "\t");
+    
+    NormalizeDataSet();
+   
     // run the clusterer
+    start = System.currentTimeMillis();
     if (runClusterer()) { // check to make sure there is something to eval
+      end = System.currentTimeMillis();
+      m_clusteringResults.append(end - start);
+      m_clusteringResults.append("\t");
+      
       StringBuffer qualResults = getClusteringQuality();
 
       if (qualResults != null) {
         m_clusteringResults.append(qualResults);
       }
+    } else {
+      m_clusteringResults.append("timed out after " + m_timeLimit + 
+        " minutes" + "\t");
     }
 
     return m_clusteringResults.toString();
+  }
+
+  private void NormalizeDataSet() {
+    Filter normalizer = new Normalize();
+    
+    try {
+      normalizer.setInputFormat(m_dataSet);
+      for (int i = 0; i < m_dataSet.numInstances(); i++) {
+        normalizer.input(m_dataSet.instance(i));
+      }
+      normalizer.batchFinished();
+    } catch (Exception e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+    
+    Instances newData = normalizer.getOutputFormat();
+    Instance processed;
+    
+    while ((processed = normalizer.output()) != null) {
+      newData.add(processed);
+    }
+    
+    m_dataSet = newData;
+    
   }
 
   /**
@@ -434,36 +482,27 @@ public class Evaluator implements Serializable {
    *
    * @return Returns true if the clusterer finishes within m_timeLimit.
    */
-  @SuppressWarnings("deprecation")
   private boolean runClusterer() {
-    long start = 0;
-    long end = 0;
-    boolean completed = true;
-    ClustererThread clusterthread = null;
+    boolean timeout = false;
 
-    clusterthread = new ClustererThread(m_clusterer, removeClass(m_dataSet));
-    start = System.currentTimeMillis();
-    clusterthread.start();
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<Void> future = executor.submit(new Task(m_clusterer, removeClass(m_dataSet)));
+
     try {
-      clusterthread.join(m_timeLimit*60*1000);
+        future.get(m_timeLimit, TimeUnit.MINUTES);
+    } catch (TimeoutException e) {
+        // This is not an error. This is our timeout.
+        timeout = true;
     } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    end = System.currentTimeMillis();
-
-    if (clusterthread.isAlive()) {
-      clusterthread.interrupt();
-      clusterthread.stop(); // without killing the thread, the object will 
-                            // persist until the thread finishes.
-      m_clusteringResults.append("timed out after " + m_timeLimit + 
-          " minutes" + "\t");
-      completed = false;
-    } else {
-      m_clusteringResults.append(formatTimeString(end - start));
-      m_clusteringResults.append("\t");
+        e.printStackTrace();
+    } catch (ExecutionException e) {
+        e.printStackTrace();
     }
     
-    return completed;
+    executor.shutdownNow();
+
+    // Assume that no timeout means the clusterer ran successfully
+    return !timeout;
   }
 
   /**
@@ -501,7 +540,26 @@ public class Evaluator implements Serializable {
       }
     }
   }
+  
+  private class Task implements Callable<Void> {
+    SubspaceClusterer sc;
+    Instances dataSet;
 
+    // Constructor
+    Task(SubspaceClusterer clusterer, Instances dataSet) {
+        this.sc = clusterer;
+        this.dataSet = dataSet;
+    }
+
+    @Override
+    public Void call() throws Exception {
+
+        sc.buildSubspaceClusterer(dataSet);
+        return null;
+
+    }
+
+}
 
   /**
    * 

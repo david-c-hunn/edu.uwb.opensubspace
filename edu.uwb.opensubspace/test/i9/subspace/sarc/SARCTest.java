@@ -20,11 +20,12 @@ public class SARCTest {
     Instances dataSet = source.getDataSet();
     ArffStorage arff = new ArffStorage(dataSet);
     
-    sarc = new SARC(0.01, /* alpha */ 
-                    0.3,  /* beta */
-                    0.01, /* epsilon */
-                    0,    /* numClusters*/
-                    arff  /* dbStorage */  
+    sarc = new SARC(0.01,  /* alpha */ 
+                    0.3,   /* beta */
+                    0.01,  /* epsilon */
+                    100.0, /* minQuality */
+                    0,     /* numClusters*/
+                    arff   /* dbStorage */  
                    );
   }
 
