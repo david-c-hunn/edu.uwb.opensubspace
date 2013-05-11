@@ -27,6 +27,7 @@ import i9.subspace.base.Cluster;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.text.DecimalFormat;
@@ -34,6 +35,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -48,6 +50,7 @@ import weka.core.Instances;
 import weka.core.Option;
 import weka.core.OptionHandler;
 import weka.core.Utils;
+import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
 import weka.filters.unsupervised.attribute.Remove;
@@ -487,7 +490,7 @@ public class Evaluator implements Serializable {
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Future<Void> future = executor.submit(new Task(m_clusterer, removeClass(m_dataSet)));
-
+    
     try {
         future.get(m_timeLimit, TimeUnit.MINUTES);
     } catch (TimeoutException e) {
@@ -503,42 +506,6 @@ public class Evaluator implements Serializable {
 
     // Assume that no timeout means the clusterer ran successfully
     return !timeout;
-  }
-
-  /**
-   * A Thread to execute a clustering.
-   * 
-   * Preconditions: If the subspace clusterer is to run with other than
-   *                default settings, they must be set outside of this class.
-   * @author dave
-   *
-   */
-  private class ClustererThread extends Thread {
-    private Exception e = null;
-    SubspaceClusterer clusterer;
-    Instances dataSet;
-
-    public ClustererThread(SubspaceClusterer sc, Instances i) {
-      this.clusterer = sc;
-      this.dataSet = i;
-    }
-    
-    private void setException(Exception e) {
-      this.e = e;
-    }
-    
-    @SuppressWarnings("unused")
-    public Exception getException() {
-      return e;
-    }
-    
-    public void run() {
-      try {
-        clusterer.buildSubspaceClusterer(dataSet);
-      } catch (Exception e) {
-        this.setException(e);
-      }
-    }
   }
   
   private class Task implements Callable<Void> {
@@ -559,7 +526,7 @@ public class Evaluator implements Serializable {
 
     }
 
-}
+  }
 
   /**
    * 
@@ -655,6 +622,43 @@ public class Evaluator implements Serializable {
   }
 
   /**
+   * 
+   * @return A copy of the data set with the assigned labels from running 
+   *         the clustering algorithm.
+   */
+  private Instances clusteredInstances(List<Cluster> foundClusters) {
+    // make a deep copy of the data set
+    Instances insts = new Instances(m_dataSet);
+    double label = 1;
+    
+    for (Cluster c : foundClusters) {
+      for (int obj : c.m_objects) {
+        insts.instance(obj).setClassValue(label);
+      }
+      ++label;
+    }
+    
+    return insts;
+  }
+  
+  private void writeInstances(Instances dataSet, File file) {
+    ArffSaver saver = new ArffSaver();
+    saver.setInstances(dataSet);
+    try {
+      saver.setFile(file);
+      saver.writeBatch();
+      saver.setUseRelativePath(true);
+    } catch(IOException e) {
+      System.out.println("Error writing output to arff file:" + e.getMessage()); 
+    }
+  }
+  
+  public void writeOutputToArff() {
+    writeInstances(clusteredInstances(m_clusterer.getSubspaceClustering()),
+        new File("cluster_results.arff"));
+  }
+  
+  /**
    * Main method for using this class. The results of the evaluation are 
    * written to the file specified by -outfile. 
    *
@@ -664,8 +668,6 @@ public class Evaluator implements Serializable {
     Evaluator eval = null;
     String outFileName = null;
     PrintWriter output = null;
-    
-//    System.out.println(System.getProperty("user.dir"));
     
     try {
       outFileName = Utils.getOption("outfile", args);
@@ -679,6 +681,7 @@ public class Evaluator implements Serializable {
       output.println(eval.clusterResultsToString());
       output.flush();
       output.close();
+      eval.writeOutputToArff();
     } catch (Exception e) {
       System.err.println(e.getMessage()); 
     } finally {

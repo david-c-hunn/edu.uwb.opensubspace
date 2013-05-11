@@ -25,7 +25,8 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 	public void buildSubspaceClusterer(Instances data) throws Exception {
 		ArffStorage arffstorage = new ArffStorage(data);
 		SARC s = new SARC(m_alpha, m_beta, m_epsilon, m_minQual, m_numClusters, arffstorage);
-		setSubspaceClustering(s.findClusters());
+//		setSubspaceClustering(s.findClusters());
+		setSubspaceClustering(s.findClustersInParallel());
 		toString();
 	}
 

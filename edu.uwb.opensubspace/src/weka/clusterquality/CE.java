@@ -99,17 +99,17 @@ public class CE extends ClusterQualityMeasure {
 		
 		for(int d=0; d<dims; d++) {
 			
-			// diese Zeile ist erstmal überhaupt nicht abgedeckt
+			// diese Zeile ist erstmal ï¿½berhaupt nicht abgedeckt
 			for(int i=0; i<size; i++) {
 				timesObjectFound[i] = 0;
 				timesObjectTrue[i] = 0;
 			}
 			
 			// nur Cluster welche auch diese Dimension als relevant haben
-			// erhöhen die Abdeckung (für diese "Dimensionszeile")
+			// erhï¿½hen die Abdeckung (fï¿½r diese "Dimensionszeile")
 			for(Cluster c : clusterList) {
 				if(c.m_subspace[d]) { // dimension ist relevant
-					// für jedes Object in diesem Cluster nun Abdeckung erhöhen
+					// fï¿½r jedes Object in diesem Cluster nun Abdeckung erhï¿½hen
 					for(int obj : c.m_objects) {
 						timesObjectFound[obj]++;
 					}
@@ -117,7 +117,7 @@ public class CE extends ClusterQualityMeasure {
 			}
 			for(Cluster c : trueclusters) {
 				if(c.m_subspace[d]) { // dimension ist relevant
-					// für jedes Object in diesem Cluster nun Abdeckung erhöhen
+					// fï¿½r jedes Object in diesem Cluster nun Abdeckung erhï¿½hen
 					for(int obj : c.m_objects) {
 						timesObjectTrue[obj]++;
 					}
@@ -125,7 +125,7 @@ public class CE extends ClusterQualityMeasure {
 			}
 			
 			// so, nun kann die union und intersection erstmal
-			// für diese "Dimensionszeile" bestimmt werden
+			// fï¿½r diese "Dimensionszeile" bestimmt werden
 			
 			// union war die summe der maxima
 			// intersection die summe der minima
@@ -134,7 +134,7 @@ public class CE extends ClusterQualityMeasure {
 				intersection += Math.min(timesObjectFound[i],timesObjectTrue[i]);
 			}
 			
-			// für die weiteren Dimensionen wird das einfach hochgezählt
+			// fï¿½r die weiteren Dimensionen wird das einfach hochgezï¿½hlt
 			// -> wir sind fertig
 		}
 		
@@ -157,7 +157,7 @@ public class CE extends ClusterQualityMeasure {
 				// er ergibt sich einfach als Produkt der gemeinsamen Objekte
 				// mal der gemeinsamen relevanten Dimensionen
 				
-				// zähle erst die gemeinsamen relevanten dims
+				// zï¿½hle erst die gemeinsamen relevanten dims
 				int sharedDims = 0;
 				for(int d=0; d<dims; d++) {
 					if(c1.m_subspace[d] && c2.m_subspace[d]) {
