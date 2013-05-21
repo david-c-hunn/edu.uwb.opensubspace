@@ -4,9 +4,10 @@
  *
  */
 
-package i9.subspace.sarc;
+package uwb.subspace.sarc;
 import i9.data.core.DBStorage;
 import i9.data.core.DataSet;
+import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
 
 import java.math.BigInteger;
@@ -21,9 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import weka.core.Instance;
 import weka.core.Instances;
-import weka.subspaceClusterer.SubspaceClusterer;
+import weka.gui.visualize.Plot2D;
 
 
 
@@ -76,6 +76,9 @@ public class SARC {
   /** The minimum cluster quality. Also called mu 0. */
   private double m_minQual = 200;  
 
+  /** This constant is used to set lambda. lambda = 1/h */
+  private double m_h = 10.0;
+
   /** 
    * An optional parameter that allows the user to specify the number of 
    * clusters to search for. If it is set to a value less than or equal to zero,
@@ -103,6 +106,10 @@ public class SARC {
   /** Show debug messages. */
   private boolean m_verbose = true;
 
+  /** 
+   * The number of threads to use. By default this is set to 2 * No logical
+   * cores.
+   */
   private int m_numThreads;
 
   public double getGlobalScore() {
@@ -207,6 +214,18 @@ public class SARC {
     return m_verbose;
   }
 
+  public double getH() {
+    return m_h;
+  }
+
+  public void setH(double h) {
+    if (h >= 1.0) {
+      this.m_h = h;
+    } else {
+      System.err.println("Attempted to set h to an invalid value. h >= 1.0");
+    }
+  }
+
   public String getGlobalScoresString() {
     StringBuilder retVal = new StringBuilder();
     int idx = 1;
@@ -230,7 +249,7 @@ public class SARC {
    * @param dbStorage
    */
   public SARC (double alpha, double beta, double epsilon, double minQual,
-      int numClusters, DBStorage dbStorage) {
+      int numClusters, String distanceClass, double h, DBStorage dbStorage) {
     int numDims = dbStorage.getDataSet().getNumDimensions();
     int numObjects = dbStorage.getDataSet().getInstanceCount();
 
@@ -241,14 +260,45 @@ public class SARC {
     setEpsilon(epsilon);
     setMinQual(minQual);
     setNumClusters(numClusters);
+    setH(h);
     setDataSet(dbStorage);
     setSampleSize(calcDiscrimSetSize(numDims, m_beta));
     setNumTrials(calcNumTrials(m_alpha, m_beta, m_epsilon, m_sampleSize, 
         numObjects, numDims));
-    //TODO: improve this 
-    m_distance = new NormalPDFDistance();
-    m_numThreads = Runtime.getRuntime().availableProcessors();
+    m_distance = BuildDistance(distanceClass);
+    m_numThreads = Runtime.getRuntime().availableProcessors() * 2;
+    setVerbose(true); // toggle displaying debug messages.
   }
+
+  /**
+   * 
+   * @param distanceClassName
+   * @return
+   */
+  private Distance BuildDistance(String distanceClassName) {
+    Distance dist = null;
+
+    try {
+      Class<?> distClass = Class.forName("uwb.subspace.sarc." 
+          + distanceClassName);
+      dist = (Distance)distClass.newInstance();
+    } catch (InstantiationException e1) {
+      System.err.println("Not a valid subspace distance class: " +
+          "uwb.subspace.sarc." + distanceClassName);
+    } catch (IllegalAccessException e1) {
+      System.err.println("Not a valid subspace distance class: " +
+          "uwb.subspace.sarc." + distanceClassName);
+    } catch (ClassNotFoundException e) {
+      System.err.println("Not a valid subspace distance class: " +
+          "uwb.subspace.sarc." + distanceClassName);
+    } 
+    if (dist == null) {
+      dist = new NormalPDFDistance();
+    }
+
+    return dist;
+  }
+
 
   /** 
    * @return A list of discovered clusters.
@@ -258,13 +308,14 @@ public class SARC {
     SoftCluster     currCluster    = null;
     boolean         searching      = true;
     ExecutorService exec           = Executors.newCachedThreadPool();
-    List<Future<SoftCluster>> candidateClusters = new ArrayList<Future<SoftCluster>>();
-    
+    List<Future<SoftCluster>> candidateClusters = 
+        new ArrayList<Future<SoftCluster>>();
+
     m_clusters = new ArrayList<Cluster>();
     m_globalScores = new ArrayList<Double>();
     m_globalScores.add(0.0); // add zero as first element, so, we don't have to 
     m_iter = 1;              // check if we are on the first iteration in the 
-    
+
     while (searching) {
       bestCluster = null;
       for (int trial = 0; trial < m_numTrials; trial += m_numThreads) {
@@ -281,32 +332,31 @@ public class SARC {
           // find the best cluster built and cache it, discard all others
           for (Future<SoftCluster> future : candidateClusters) {
             SoftCluster sc = future.get();
-            if (sc.conditionalQuality() > currCluster.conditionalQuality()) {
+            if (sc.higherQualityThan(currCluster)) { // > 0 means sc is better than currCluster
               currCluster = sc;
             }
           }
         } catch (InterruptedException e) {
-          // TODO Auto-generated catch block
+          System.err.println(e.getMessage());
           e.printStackTrace();
         } catch (ExecutionException e) {
-          // TODO Auto-generated catch block
+          System.err.println(e.getMessage());
           e.printStackTrace();
         }
         m_clusters.add(currCluster);
         assignObjectsToClusters();
-        if (m_distance.compare(currCluster.conditionalQuality(), m_minQual) < 0 ) {
-          m_clusters.remove(currCluster);
-          continue; // cluster doesn't meet the minimum criteria
-        }
+        //removeSmallClusters();
         if (bestCluster == null) {
           bestCluster = currCluster;
-        } else if (m_distance.compare(bestCluster.conditionalQuality(), 
-            currCluster.conditionalQuality()) < 0 ) {          
+        } else if (currCluster.higherQualityThan(bestCluster)) {          
           m_clusters.remove(bestCluster); 
           bestCluster = currCluster;
         } else {
           m_clusters.remove(currCluster);
-        } 
+        }
+        if (m_verbose && trial % 1000 == 0) {
+          printFoundClusters();
+        }
       }
       assignObjectsToClusters();
       getGlobalScore();
@@ -314,12 +364,47 @@ public class SARC {
       ++m_iter;
     }
 
-    System.out.println(getGlobalScoresString());
-    
+    if (m_verbose) { 
+      printFoundClusters();
+      System.out.println(getGlobalScoresString());
+    }
+
     return m_clusters;
   }
 
-  
+  /**
+   * 
+   */
+  private void printFoundClusters() {
+    System.out.println();
+    System.out.println("Found Clusters:");
+    for (Cluster c : m_clusters) {
+      SoftCluster sc = (SoftCluster) c;
+      System.out.println(sc.toString());
+    }
+    System.out.println();
+  }
+
+  /**
+   * Removes clusters from m_clusters that are smaller than 
+   * alpha * num instances.
+   */
+  private void removeSmallClusters() {
+    List<Cluster> removeList = new ArrayList<Cluster>();
+    int minSize = (int) (m_alpha * m_dataSet.getInstanceCount());
+
+    for (Cluster c : m_clusters) {
+      if (c.m_objects.size() < minSize) {
+        removeList.add(c);
+      }
+    }
+
+    for (Cluster c : removeList) {
+      m_clusters.remove(c);
+    }
+
+  }
+
   /** 
    * @return A list of discovered clusters.
    */
@@ -346,13 +431,13 @@ public class SARC {
         m_clusters.add(currCluster);
         currCluster.quality(); // force quality calc on all objects
         assignObjectsToClusters();
-        if (m_distance.compare(currCluster.conditionalQuality(), m_minQual) < 0 ) {
+        if (m_distance.compareLikelihood(currCluster.conditionalQuality(), m_minQual) < 0 ) {
           m_clusters.remove(currCluster);
           continue; // cluster doesn't meet the minimum criteria
         }
         if (bestCluster == null) {
           bestCluster = currCluster;
-        } else if (m_distance.compare(bestCluster.conditionalQuality(), 
+        } else if (m_distance.compareLikelihood(bestCluster.conditionalQuality(), 
             currCluster.conditionalQuality()) < 0 ) {          
           m_clusters.remove(bestCluster); 
           bestCluster = currCluster;
@@ -381,17 +466,18 @@ public class SARC {
     }
 
     System.out.println(getGlobalScoresString());
-    
+
     return m_clusters;
   }
 
+  /**
+   * 
+   * @author dave
+   *
+   */
   private class ClusterBuilder implements Callable<SoftCluster> {
     SoftCluster cluster;
-    
-    public SoftCluster getCluster() {
-      return cluster;
-    }
-    
+
     // Constructor
     ClusterBuilder() {
       cluster = new SoftCluster(new boolean[m_dataSet.numAttributes()],
@@ -402,23 +488,31 @@ public class SARC {
     public SoftCluster call() throws Exception {
       List<Integer> samp = randomSample(m_sampleSize, m_dataSet.numInstances());
       
+      cluster.setLambda(1/m_h);
       cluster.calc(samp);
       assignObjectsToCluster();
-      
+
       return cluster;
     }
-    
+
     private void assignObjectsToCluster() {
       boolean itsMine = true;
-      
+
       for (int i = 0; i < m_dataSet.getInstanceCount(); i++) {
         itsMine = true;
         for (Cluster c : m_clusters) {
           SoftCluster sc = (SoftCluster)c;
-          if (sc.m_objScore[i] > cluster.m_objScore[i]) {
+
+          if (m_distance.compareDistance(cluster.m_objDistances[i], 
+              sc.m_objDistances[i]) > 0) {
             itsMine = false;
             break;
-          } 
+          }
+          //          if (m_distance.compareLikelihood(cluster.m_objScore[i], 
+          //              sc.m_objScore[i]) > 0) {
+          //            itsMine = false;
+          //            break;
+          //          } 
         }
         if (itsMine) {
           cluster.m_objects.add(i);
@@ -427,7 +521,9 @@ public class SARC {
     }
   }
 
-  
+
+
+
   /**
    * Assigns objects to the cluster they score highest with. Equivalently,
    * assigns each object to the closest cluster centroid.
@@ -438,13 +534,22 @@ public class SARC {
     }
 
     for (int i = 0; i < m_dataSet.getInstanceCount(); i++) {
+      if (m_clusters.size() == 0) {
+        break; // no clusters
+      }
       SoftCluster best = (SoftCluster) m_clusters.get(0);
 
       for (Cluster c : m_clusters) {
         SoftCluster sc = (SoftCluster)c;
-        if (sc.m_objScore[i] > best.m_objScore[i]) {
+        if (m_distance.compareDistance(sc.m_objDistances[i], 
+            best.m_objDistances[i]) > 0)  {
           best = sc;
-        } 
+        }
+
+        //        if (m_distance.compareLikelihood(sc.m_objScore[i], 
+        //            best.m_objScore[i]) > 0)  {
+        //          best = sc;
+        //        } 
       }
       best.m_objects.add(i);
     }
@@ -539,14 +644,18 @@ public class SARC {
    */
   private boolean stillSearching(SoftCluster bestCluster, int numClustersFound) {
     boolean retVal = true;
-    
+
     if (bestCluster == null) {
       retVal = false;
     } else if (bestCluster.conditionalQuality() < m_minQual) {
       retVal = false;
     } else if (m_numClusters > 0 && m_numClusters <= numClustersFound) {
       retVal = false;
-    }
+    } //else if (numClustersFound == m_numClustersFoundLastIteration) {
+    //      retVal = false;
+    //    } else {
+    //      m_numClustersFoundLastIteration = numClustersFound;
+    //    }
 
     return retVal;
   }
@@ -650,7 +759,7 @@ public class SARC {
     return new ArrayList<Integer>(sample);
   }
 
-  
+
 
 }
 

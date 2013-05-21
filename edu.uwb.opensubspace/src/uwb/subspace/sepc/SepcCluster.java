@@ -1,13 +1,14 @@
-package i9.subspace.sepc;
+package uwb.subspace.sepc;
 
 import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
-import i9.subspace.sepc.SEPC.DataPoint;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import uwb.subspace.sepc.SEPC.DataPoint;
 
 public class SepcCluster extends Cluster {
 	

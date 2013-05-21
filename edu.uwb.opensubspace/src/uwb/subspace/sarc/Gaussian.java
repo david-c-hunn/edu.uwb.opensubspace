@@ -1,4 +1,4 @@
-package i9.subspace.sarc;
+package uwb.subspace.sarc;
 
 /**
  * Compilation:  javac Gaussian.java

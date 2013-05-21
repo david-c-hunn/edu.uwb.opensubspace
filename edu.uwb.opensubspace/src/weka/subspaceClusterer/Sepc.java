@@ -1,11 +1,11 @@
 package weka.subspaceClusterer;
 
 import i9.subspace.base.ArffStorage;
-import i9.subspace.sepc.SEPC;
 
 import java.util.Enumeration;
 import java.util.Vector;
 
+import uwb.subspace.sepc.SEPC;
 import weka.core.Instances;
 import weka.core.Option;
 import weka.core.OptionHandler;

@@ -10,6 +10,7 @@ import i9.subspace.base.ArffStorage;
 
 import org.junit.Test;
 
+import uwb.subspace.sepc.SEPC;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 

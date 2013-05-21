@@ -4,7 +4,7 @@
  *
  */
 
-package i9.subspace.sepc;
+package uwb.subspace.sepc;
 import i9.data.core.DBStorage;
 import i9.data.core.Instance;
 import i9.subspace.base.Cluster;

@@ -1,6 +1,6 @@
 
 
-package i9.subspace.sarc;
+package uwb.subspace.sarc;
 import i9.data.core.DataSet;
 import i9.subspace.base.Cluster;
 
@@ -49,13 +49,18 @@ public class SoftCluster extends Cluster {
 	 * lambda to values less than one (but greater than zero) will cause the 
 	 * weights associated with low spread attributes to dominate.
 	 */
-	private double m_lambda = 1.0 / 11.0;
+	private double m_lambda = 0.1;
 	
 	/** 
 	 *  Also cache the scores for each object, since, only later are outliers
 	 *  discarded.
 	 */
 	public double[] m_objScore;
+	
+	/** 
+   * Cache the distance to each object.
+   */
+	public double[] m_objDistances;
 	
 	/** Used to calculate the mean along a given dimension. */
 	private static final Mean m_meanCalc = new Mean();
@@ -84,6 +89,8 @@ public class SoftCluster extends Cluster {
 	  this.m_spread = Arrays.copyOf(other.m_spread, other.m_spread.length);
 	  this.m_weights = Arrays.copyOf(other.m_weights, other.m_weights.length);
 	  this.m_objScore = Arrays.copyOf(other.m_objScore, other.m_objScore.length);
+//	  this.m_objDistances = 
+//	      Arrays.copyOf(other.m_objDistances, other.m_objDistances.length);
 	  this.m_dataSet = other.m_dataSet;
 	  this.setLambda(other.getLambda());
 	  this.m_distance = other.m_distance;
@@ -94,13 +101,14 @@ public class SoftCluster extends Cluster {
 	 * @param subspace
 	 * @param objects
 	 */
-	public SoftCluster(boolean[] subspace, List<Integer> objects, DataSet data, Distance d) {
+	public SoftCluster(boolean[] subspace, List<Integer> objects, DataSet data, 
+	    Distance d) {
 		super(subspace, objects);
 		m_center = new double[subspace.length];
 		m_spread = new double[subspace.length];
 		m_weights = new double[subspace.length];
 		m_dataSet = data;
-		m_distance = (d != null) ? d : new NegativeEntropyNormalPDFDistance();
+		m_distance = (d != null) ? d : new NormalPDFDistance();
 	}
 	
 	/**
@@ -114,13 +122,16 @@ public class SoftCluster extends Cluster {
 	public boolean calc(List<Integer> sample) {
 	  List<double[]> discSet = transpose(sample);
 		
+	  m_objDistances = new double[m_dataSet.getInstanceCount()];
 	  m_objScore = new double[m_dataSet.getInstanceCount()]; // allocate storage to cache each object score
 		m_score = -1;                                          // Make sure quality is calc'd with next request
 		
+		m_center = m_dataSet.instance(sample.get(0)).toDoubleArray();
+		
 		// find the mean and variance along each dimension
 		for (int c = 0; c < discSet.size(); ++c) {
-		  m_center[c] = m_meanCalc.evaluate(discSet.get(c));
-		  m_spread[c] = m_varCalc.evaluate(discSet.get(c), m_center[c]);
+//		  m_center[c] = m_meanCalc.evaluate(discSet.get(c));
+		  m_spread[c] = m_varCalc.evaluate(discSet.get(c), m_center[c]) + 0.00001; // add a small constant to prevent zeros 
 		}
 		calcWeights();
 		
@@ -169,6 +180,19 @@ public class SoftCluster extends Cluster {
 	}
 	
 	/**
+	 * 
+	 * @param other
+	 * @return True if the calling cluster is higher quality than the other
+	 *         cluster.
+	 */
+	public boolean higherQualityThan(SoftCluster other) {
+	  boolean comp = (m_distance.compareLikelihood(this.conditionalQuality(), 
+	      other.conditionalQuality()) > 0);
+	  
+	  return comp;
+	}
+	
+	/**
    * @return The quality of the calling SoftCluster.
    */
   public double quality() {
@@ -180,9 +204,18 @@ public class SoftCluster extends Cluster {
       return m_score; // return the cached value
     }
     
+//    for (int dim = 0; dim < m_spread.length; dim++) {
+//      prodStdevs *= m_spread[dim];
+//    }
+    
     for (Instance i : m_dataSet) {
-      m_objScore[count] = m_distance.calc(i.toDoubleArray(), m_center, m_spread, m_weights, getLambda()); 
-      sumDist += m_objScore[count++];
+      m_objDistances[count] = m_distance.calcDistance(i.toDoubleArray(), 
+          m_center, m_spread, m_weights);
+      m_objScore[count] = m_distance.calcLikelihood(i.toDoubleArray(), m_center, 
+          m_spread, m_weights, getLambda()); 
+      sumDist += m_objScore[count];
+       
+      count++;
     }
     m_score = sumDist / prodStdevs;
     
@@ -237,12 +270,24 @@ public class SoftCluster extends Cluster {
   public String toString () {
     StringBuilder retVal = new StringBuilder();
     
-    retVal.append("[ ");
+    retVal.append("center: [ ");
+    for (int i = 0; i < m_center.length; i++) {
+      retVal.append(String.format("%.2f", m_center[i]));
+      retVal.append(" ");
+    }
+    retVal.append("] ");
+    retVal.append("spread: [ ");
+    for (int i = 0; i < m_spread.length; i++) {
+      retVal.append(String.format("%.2f", m_spread[i]));
+      retVal.append(" ");
+    }
+    retVal.append("] ");
+    retVal.append("weights: [ ");
     for (int i = 0; i < m_weights.length; i++) {
       retVal.append(String.format("%.2f", m_weights[i]));
       retVal.append(" ");
     }
-    retVal.append(" ] #: " + m_objects.size() + " / ");
+    retVal.append("] #: " + m_objects.size() + " / ");
     
     for (Integer i : m_objects) {
       retVal.append(String.format("%.2f", m_objScore[i]));

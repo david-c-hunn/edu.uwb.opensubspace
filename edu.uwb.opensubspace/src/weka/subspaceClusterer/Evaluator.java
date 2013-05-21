@@ -45,6 +45,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import weka.clusterquality.ClusterQualityMeasure;
+import weka.core.Attribute;
+import weka.core.FastVector;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Option;
@@ -53,8 +55,10 @@ import weka.core.Utils;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Add;
 import weka.filters.unsupervised.attribute.Remove;
-import weka.filters.unsupervised.instance.Normalize;
+import weka.filters.unsupervised.attribute.Normalize;
+import weka.gui.visualize.Plot2D;
 
 /**
  * A class for evaluating subspace clustering models. Most of this code
@@ -415,27 +419,16 @@ public class Evaluator implements Serializable {
 
   private void NormalizeDataSet() {
     Filter normalizer = new Normalize();
-    
+    Instances newData;
+
     try {
       normalizer.setInputFormat(m_dataSet);
-      for (int i = 0; i < m_dataSet.numInstances(); i++) {
-        normalizer.input(m_dataSet.instance(i));
-      }
-      normalizer.batchFinished();
+      newData = Filter.useFilter(m_dataSet, normalizer);
+      m_dataSet = newData;
     } catch (Exception e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
-    }
-    
-    Instances newData = normalizer.getOutputFormat();
-    Instance processed;
-    
-    while ((processed = normalizer.output()) != null) {
-      newData.add(processed);
-    }
-    
-    m_dataSet = newData;
-    
+    }    
   }
 
   /**
@@ -625,22 +618,33 @@ public class Evaluator implements Serializable {
    * 
    * @return A copy of the data set with the assigned labels from running 
    *         the clustering algorithm.
+   * @throws Exception 
    */
-  private Instances clusteredInstances(List<Cluster> foundClusters) {
+  private Instances addLabelsToDataSet(List<Cluster> foundClusters) throws Exception {
     // make a deep copy of the data set
     Instances insts = new Instances(m_dataSet);
-    double label = 1;
+    FastVector nomLabels = new FastVector();
     
+    for (int idx = 0; idx < foundClusters.size(); ++idx) {
+      nomLabels.addElement("Cluster_" + idx);
+    }
+    
+    insts.insertAttributeAt(new Attribute("FoundClusters", nomLabels), 
+        insts.numAttributes());
+    
+    int cluster_idx = 0;
+    int label_idx = insts.numAttributes() - 1;
     for (Cluster c : foundClusters) {
-      for (int obj : c.m_objects) {
-        insts.instance(obj).setClassValue(label);
+      for (Integer obj : c.m_objects) {
+        insts.instance(obj).setValue(label_idx, 
+            (String)nomLabels.elementAt(cluster_idx));
       }
-      ++label;
+      cluster_idx++;
     }
     
     return insts;
   }
-  
+    
   private void writeInstances(Instances dataSet, File file) {
     ArffSaver saver = new ArffSaver();
     saver.setInstances(dataSet);
@@ -653,24 +657,34 @@ public class Evaluator implements Serializable {
     }
   }
   
-  public void writeOutputToArff() {
-    writeInstances(clusteredInstances(m_clusterer.getSubspaceClustering()),
-        new File("cluster_results.arff"));
+  public void writeOutputToArff(String fname) {
+    try {
+      writeInstances(addLabelsToDataSet(m_clusterer.getSubspaceClustering()),
+          new File(fname));
+    } catch (Exception e) {
+      System.err.println("Error writing results arff file to disk. " 
+                         + e.getMessage());
+      e.printStackTrace();
+    }
   }
   
   /**
    * Main method for using this class. The results of the evaluation are 
    * written to the file specified by -outfile. 
    *
+   * -arfffile 
+   *
    * @param args the options
    */
   public static void main (String[] args) {
     Evaluator eval = null;
     String outFileName = null;
+    String arffFileName = null;
     PrintWriter output = null;
     
     try {
       outFileName = Utils.getOption("outfile", args);
+      arffFileName = Utils.getOption("arfffile", args);
       if (outFileName.length() > 0) {
         output = new PrintWriter(new BufferedWriter(new FileWriter(outFileName, true)));
       } else {
@@ -681,7 +695,9 @@ public class Evaluator implements Serializable {
       output.println(eval.clusterResultsToString());
       output.flush();
       output.close();
-      eval.writeOutputToArff();
+      if (arffFileName.length() > 0) {
+        eval.writeOutputToArff(arffFileName);
+      }
     } catch (Exception e) {
       System.err.println(e.getMessage()); 
     } finally {
@@ -691,6 +707,10 @@ public class Evaluator implements Serializable {
     } 
   }
 
+  private static void testNormalizeDataSet() {
+    
+  }
+  
   @SuppressWarnings("unused")
   private static void testHelpMessage() {
     Evaluator eval = null;
