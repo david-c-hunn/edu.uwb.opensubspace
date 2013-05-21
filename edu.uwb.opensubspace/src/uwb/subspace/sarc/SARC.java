@@ -267,7 +267,7 @@ public class SARC {
         numObjects, numDims));
     m_distance = BuildDistance(distanceClass);
     m_numThreads = Runtime.getRuntime().availableProcessors() * 2;
-    setVerbose(true); // toggle displaying debug messages.
+    setVerbose(false); // toggle displaying debug messages.
   }
 
   /**
@@ -369,6 +369,7 @@ public class SARC {
       System.out.println(getGlobalScoresString());
     }
 
+    exec.shutdownNow();
     return m_clusters;
   }
 
@@ -403,71 +404,6 @@ public class SARC {
       m_clusters.remove(c);
     }
 
-  }
-
-  /** 
-   * @return A list of discovered clusters.
-   */
-  public List<Cluster> findClusters() {
-    SoftCluster   bestCluster    = null;
-    SoftCluster   currCluster    = null;
-    boolean       searching      = true;
-
-    m_clusters = new ArrayList<Cluster>();
-    m_globalScores = new ArrayList<Double>();
-    m_globalScores.add(0.0); // add zero as first element, so, we don't have to 
-    m_iter = 1;              // check if we are on the first iteration in the 
-    // while loop.
-    if (m_verbose) {
-      if (this.m_numClusters > 0) {
-        System.out.println("Started clustering: Searching for " 
-            + this.m_numClusters + " clusters.");
-      }
-    }
-    while (searching) {
-      bestCluster = null;
-      for (int trial = 0; trial < m_numTrials; ++trial) {
-        currCluster = buildCluster();
-        m_clusters.add(currCluster);
-        currCluster.quality(); // force quality calc on all objects
-        assignObjectsToClusters();
-        if (m_distance.compareLikelihood(currCluster.conditionalQuality(), m_minQual) < 0 ) {
-          m_clusters.remove(currCluster);
-          continue; // cluster doesn't meet the minimum criteria
-        }
-        if (bestCluster == null) {
-          bestCluster = currCluster;
-        } else if (m_distance.compareLikelihood(bestCluster.conditionalQuality(), 
-            currCluster.conditionalQuality()) < 0 ) {          
-          m_clusters.remove(bestCluster); 
-          bestCluster = currCluster;
-        } else {
-          m_clusters.remove(currCluster);
-        } 
-      }
-      assignObjectsToClusters();
-      getGlobalScore();
-      if (Math.abs(m_globalScores.get(m_iter - 1) - m_globalScores.get(m_iter)) <= m_delta) {
-        System.out.println("We have reached the convergence zone!");
-        System.out.println("Found " + m_clusters.size() + " clusters.");
-        //searching = false;
-      } //else {
-      if (m_verbose) {
-        if (bestCluster != null)
-          System.out.println("Best Cluster Quality from this iteration: " + 
-              bestCluster.conditionalQuality());
-      }
-      if (bestCluster == null) {
-        searching = false;
-      } else {
-        searching = stillSearching(bestCluster, m_clusters.size());
-      }
-      ++m_iter;
-    }
-
-    System.out.println(getGlobalScoresString());
-
-    return m_clusters;
   }
 
   /**

@@ -381,7 +381,7 @@ public class Evaluator implements Serializable {
   public String evaluate(String[] options) throws Exception {
     long start = 0;
     long end = 0;
-    
+
     // clear any previous results
     clear();
     // Set options for the Evaluator
@@ -394,16 +394,16 @@ public class Evaluator implements Serializable {
     m_clusteringResults.append(m_clusterer.getName() + "\t");
     m_clusteringResults.append(m_clusterer.getParameterString() + "\t");
     m_clusteringResults.append(m_dataSet.relationName() + "\t");
-    
+
     NormalizeDataSet();
-   
+
     // run the clusterer
     start = System.currentTimeMillis();
     if (runClusterer()) { // check to make sure there is something to eval
       end = System.currentTimeMillis();
       m_clusteringResults.append(end - start);
       m_clusteringResults.append("\t");
-      
+
       StringBuffer qualResults = getClusteringQuality();
 
       if (qualResults != null) {
@@ -411,7 +411,7 @@ public class Evaluator implements Serializable {
       }
     } else {
       m_clusteringResults.append("timed out after " + m_timeLimit + 
-        " minutes" + "\t");
+          " minutes" + "\t");
     }
 
     return m_clusteringResults.toString();
@@ -483,40 +483,38 @@ public class Evaluator implements Serializable {
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
     Future<Void> future = executor.submit(new Task(m_clusterer, removeClass(m_dataSet)));
-    
+
     try {
-        future.get(m_timeLimit, TimeUnit.MINUTES);
+      future.get(m_timeLimit, TimeUnit.MINUTES);
     } catch (TimeoutException e) {
-        // This is not an error. This is our timeout.
-        timeout = true;
+      // This is not an error. This is our timeout.
+      timeout = true;
     } catch (InterruptedException e) {
-        e.printStackTrace();
+      e.printStackTrace();
     } catch (ExecutionException e) {
-        e.printStackTrace();
+      e.printStackTrace();
     }
-    
+
     executor.shutdownNow();
 
     // Assume that no timeout means the clusterer ran successfully
     return !timeout;
   }
-  
+
   private class Task implements Callable<Void> {
     SubspaceClusterer sc;
     Instances dataSet;
 
     // Constructor
     Task(SubspaceClusterer clusterer, Instances dataSet) {
-        this.sc = clusterer;
-        this.dataSet = dataSet;
+      this.sc = clusterer;
+      this.dataSet = dataSet;
     }
 
     @Override
     public Void call() throws Exception {
-
-        sc.buildSubspaceClusterer(dataSet);
-        return null;
-
+      sc.buildSubspaceClusterer(dataSet);
+      return null;
     }
 
   }
@@ -566,7 +564,7 @@ public class Evaluator implements Serializable {
     optionsText.append("\tSpecifies the subspace clustering algorithm to\n");
     optionsText.append("\tevaluate. It must be one of the algorithms in \n");
     optionsText.append("\tin the package weka.subspaceClusterer.\n");
-    
+
     optionsText.append("-t <name of input file>\n");
     optionsText.append("\tSpecifies the input arff file containing the\n");
     optionsText.append("\tdata set to cluster.\n");
@@ -624,14 +622,14 @@ public class Evaluator implements Serializable {
     // make a deep copy of the data set
     Instances insts = new Instances(m_dataSet);
     FastVector nomLabels = new FastVector();
-    
+
     for (int idx = 0; idx < foundClusters.size(); ++idx) {
       nomLabels.addElement("Cluster_" + idx);
     }
-    
+
     insts.insertAttributeAt(new Attribute("FoundClusters", nomLabels), 
         insts.numAttributes());
-    
+
     int cluster_idx = 0;
     int label_idx = insts.numAttributes() - 1;
     for (Cluster c : foundClusters) {
@@ -641,10 +639,10 @@ public class Evaluator implements Serializable {
       }
       cluster_idx++;
     }
-    
+
     return insts;
   }
-    
+
   private void writeInstances(Instances dataSet, File file) {
     ArffSaver saver = new ArffSaver();
     saver.setInstances(dataSet);
@@ -656,18 +654,18 @@ public class Evaluator implements Serializable {
       System.out.println("Error writing output to arff file:" + e.getMessage()); 
     }
   }
-  
+
   public void writeOutputToArff(String fname) {
     try {
       writeInstances(addLabelsToDataSet(m_clusterer.getSubspaceClustering()),
           new File(fname));
     } catch (Exception e) {
       System.err.println("Error writing results arff file to disk. " 
-                         + e.getMessage());
+          + e.getMessage());
       e.printStackTrace();
     }
   }
-  
+
   /**
    * Main method for using this class. The results of the evaluation are 
    * written to the file specified by -outfile. 
@@ -681,12 +679,13 @@ public class Evaluator implements Serializable {
     String outFileName = null;
     String arffFileName = null;
     PrintWriter output = null;
-    
+
     try {
       outFileName = Utils.getOption("outfile", args);
       arffFileName = Utils.getOption("arfffile", args);
       if (outFileName.length() > 0) {
-        output = new PrintWriter(new BufferedWriter(new FileWriter(outFileName, true)));
+        output = new PrintWriter(new BufferedWriter(
+            new FileWriter(outFileName, true)));
       } else {
         output = new PrintWriter(System.out);
       }
@@ -707,10 +706,6 @@ public class Evaluator implements Serializable {
     } 
   }
 
-  private static void testNormalizeDataSet() {
-    
-  }
-  
   @SuppressWarnings("unused")
   private static void testHelpMessage() {
     Evaluator eval = null;
