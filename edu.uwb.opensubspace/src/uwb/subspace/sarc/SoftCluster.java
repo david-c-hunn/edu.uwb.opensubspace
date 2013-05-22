@@ -109,6 +109,7 @@ public class SoftCluster extends Cluster {
 		m_weights = new double[subspace.length];
 		m_dataSet = data;
 		m_distance = (d != null) ? d : new NormalPDFDistance();
+		m_varCalc.setBiasCorrected(true);
 	}
 	
 	/**
@@ -126,11 +127,10 @@ public class SoftCluster extends Cluster {
 	  m_objScore = new double[m_dataSet.getInstanceCount()]; // allocate storage to cache each object score
 		m_score = -1;                                          // Make sure quality is calc'd with next request
 		
-		m_center = m_dataSet.instance(sample.get(0)).toDoubleArray();
-		
+		//m_center = m_dataSet.instance(sample.get(0)).toDoubleArray();
 		// find the mean and variance along each dimension
 		for (int c = 0; c < discSet.size(); ++c) {
-//		  m_center[c] = m_meanCalc.evaluate(discSet.get(c));
+		  m_center[c] = m_meanCalc.evaluate(discSet.get(c));
 		  m_spread[c] = m_varCalc.evaluate(discSet.get(c), m_center[c]) + 0.00001; // add a small constant to prevent zeros 
 		}
 		calcWeights();

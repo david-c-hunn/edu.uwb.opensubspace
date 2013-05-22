@@ -74,7 +74,7 @@ public class SARC {
   private int m_sampleSize = 2; 
 
   /** The minimum cluster quality. Also called mu 0. */
-  private double m_minQual = 200;  
+  private double m_minQual = 0;  
 
   /** This constant is used to set lambda. lambda = 1/h */
   private double m_h = 10.0;
@@ -267,7 +267,7 @@ public class SARC {
         numObjects, numDims));
     m_distance = BuildDistance(distanceClass);
     m_numThreads = Runtime.getRuntime().availableProcessors() * 2;
-    setVerbose(false); // toggle displaying debug messages.
+    setVerbose(true); // toggle displaying debug messages.
   }
 
   /**
@@ -345,7 +345,7 @@ public class SARC {
         }
         m_clusters.add(currCluster);
         assignObjectsToClusters();
-        //removeSmallClusters();
+//        removeSmallClusters();
         if (bestCluster == null) {
           bestCluster = currCluster;
         } else if (currCluster.higherQualityThan(bestCluster)) {          
@@ -424,7 +424,7 @@ public class SARC {
     public SoftCluster call() throws Exception {
       List<Integer> samp = randomSample(m_sampleSize, m_dataSet.numInstances());
       
-      cluster.setLambda(1/m_h);
+      cluster.setLambda(1.0/m_h);
       cluster.calc(samp);
       assignObjectsToCluster();
 

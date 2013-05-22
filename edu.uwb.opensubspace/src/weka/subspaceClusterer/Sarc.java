@@ -20,7 +20,7 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 	private double m_alpha       = 0.01;  // min cluster density
 	private double m_beta        = 0.25;  // trade-off between num dims and num instances
 	private double m_epsilon     = 0.01;  // chance of failing to find a cluster
-	private double m_minQual     = 1.00;
+	private double m_minQual     = 0.00;
 	private int    m_numClusters = 1;     // number of clusters to find
 	private double m_h           = 10.0;  // lambda = 1/h
 	private String m_distClass   = "NormalPDFDistance";    // name of the distance class
@@ -96,7 +96,7 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
     
     optionString = Utils.getOption("h_val", options);
     if (optionString.length() != 0) {
-      setMinQual(Double.parseDouble(optionString));
+      setH(Double.parseDouble(optionString));
     }
 	}
 
@@ -198,7 +198,7 @@ public class Sarc extends SubspaceClusterer implements OptionHandler {
 	         "minQual="     + m_minQual     + "; " +
 		       "numClusters=" + m_numClusters + "; " +
 	         "distance="    + m_distClass   + "; " +
-	         "h="           + m_h;
+	         "h_val="       + m_h;
 	}
 
 	public static void main (String[] argv) {
