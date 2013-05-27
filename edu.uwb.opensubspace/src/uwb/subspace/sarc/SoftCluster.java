@@ -89,8 +89,8 @@ public class SoftCluster extends Cluster {
 	  this.m_spread = Arrays.copyOf(other.m_spread, other.m_spread.length);
 	  this.m_weights = Arrays.copyOf(other.m_weights, other.m_weights.length);
 	  this.m_objScore = Arrays.copyOf(other.m_objScore, other.m_objScore.length);
-//	  this.m_objDistances = 
-//	      Arrays.copyOf(other.m_objDistances, other.m_objDistances.length);
+	  this.m_objDistances = 
+	      Arrays.copyOf(other.m_objDistances, other.m_objDistances.length);
 	  this.m_dataSet = other.m_dataSet;
 	  this.setLambda(other.getLambda());
 	  this.m_distance = other.m_distance;

@@ -107,8 +107,8 @@ public class SARC {
   private boolean m_verbose = true;
 
   /** 
-   * The number of threads to use. By default this is set to 2 * No logical
-   * cores.
+   * The number of threads to use. By default this is set to the number of 
+   * logical cores.
    */
   private int m_numThreads;
 
@@ -266,8 +266,8 @@ public class SARC {
     setNumTrials(calcNumTrials(m_alpha, m_beta, m_epsilon, m_sampleSize, 
         numObjects, numDims));
     m_distance = BuildDistance(distanceClass);
-    m_numThreads = Runtime.getRuntime().availableProcessors() * 2;
-    setVerbose(true); // toggle displaying debug messages.
+    m_numThreads = Runtime.getRuntime().availableProcessors();
+    setVerbose(false); // toggle displaying debug messages.
   }
 
   /**
@@ -369,6 +369,12 @@ public class SARC {
       System.out.println(getGlobalScoresString());
     }
 
+    for (Cluster c : m_clusters) {
+      for (int i = 0; i < c.m_subspace.length; i++) {
+        c.m_subspace[i] = true;
+      }
+    }
+    
     exec.shutdownNow();
     return m_clusters;
   }

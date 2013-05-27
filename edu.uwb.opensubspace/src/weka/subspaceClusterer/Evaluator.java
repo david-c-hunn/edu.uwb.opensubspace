@@ -274,10 +274,6 @@ public class Evaluator implements Serializable {
    */
   public void setOptions(String options[]) throws Exception {		
     try {
-      if (Utils.getFlag('h', options)) {
-        throw new Exception("Help requested.");
-      }
-
       String scName = Utils.getOption("sc", options); 
       if (scName.length() == 0) {
         System.err.println("No algorithm specified. Using the default" +
@@ -286,6 +282,10 @@ public class Evaluator implements Serializable {
         this.setClusterer(scName);  
       }
 
+      if (Utils.getFlag('h', options)) {
+        throw new Exception("Help requested.");
+      }
+      
       String dataSetFileName = Utils.getOption('t', options);
       if (dataSetFileName.length() == 0) {
         throw new Exception("No input file, use -t");
