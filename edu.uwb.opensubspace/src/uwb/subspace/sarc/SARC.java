@@ -250,6 +250,7 @@ public class SARC {
    */
   public SARC (double alpha, double beta, double epsilon, double minQual,
       int numClusters, String distanceClass, double h, DBStorage dbStorage) {
+    
     int numDims = dbStorage.getDataSet().getNumDimensions();
     int numObjects = dbStorage.getDataSet().getInstanceCount();
 
@@ -267,7 +268,7 @@ public class SARC {
         numObjects, numDims));
     m_distance = BuildDistance(distanceClass);
     m_numThreads = Runtime.getRuntime().availableProcessors();
-    setVerbose(false); // toggle displaying debug messages.
+    setVerbose(true); // toggle displaying debug messages.
   }
 
   /**
@@ -431,8 +432,8 @@ public class SARC {
       List<Integer> samp = randomSample(m_sampleSize, m_dataSet.numInstances());
       
       cluster.setLambda(1.0/m_h);
-      cluster.calc(samp);
-      assignObjectsToCluster();
+      if (cluster.calc(samp))
+        assignObjectsToCluster();
 
       return cluster;
     }
@@ -449,12 +450,7 @@ public class SARC {
               sc.m_objDistances[i]) > 0) {
             itsMine = false;
             break;
-          }
-          //          if (m_distance.compareLikelihood(cluster.m_objScore[i], 
-          //              sc.m_objScore[i]) > 0) {
-          //            itsMine = false;
-          //            break;
-          //          } 
+          } 
         }
         if (itsMine) {
           cluster.m_objects.add(i);

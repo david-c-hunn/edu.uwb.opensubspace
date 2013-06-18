@@ -285,7 +285,7 @@ public class Evaluator implements Serializable {
       if (Utils.getFlag('h', options)) {
         throw new Exception("Help requested.");
       }
-      
+
       String dataSetFileName = Utils.getOption('t', options);
       if (dataSetFileName.length() == 0) {
         throw new Exception("No input file, use -t");
@@ -302,9 +302,9 @@ public class Evaluator implements Serializable {
 
       String trueFileName = Utils.getOption('T', options);
       if (trueFileName.length() == 0) {
-        System.err.println("No true cluster file set. Some metrics " +
-            "will not function without a true cluster file " +
-            "(CE and RNIA). Use -T to specify a true cluster file.");
+        //        System.err.println("No true cluster file set. Some metrics " +
+        //            "will not function without a true cluster file " +
+        //            "(CE and RNIA). Use -T to specify a true cluster file.");
       } else {
         setTrueClusters(trueFileName);
       }
@@ -333,44 +333,44 @@ public class Evaluator implements Serializable {
 
     if (m_metrics == null || m_metrics.size() == 0) {
       results.append("No metrics set.");
-    } 
-    if (m_clusterer.getSubspaceClustering() == null) {
-      clusterList = new ArrayList<Cluster>();
     } else {
-      clusterList = (ArrayList<Cluster>)m_clusterer.getSubspaceClustering();
-    }
-
-    //calculate each quality metric
-    for (ClusterQualityMeasure m : m_metrics) {
-      m.calculateQuality(clusterList, m_dataSet, m_trueClusters);
-    }
-
-    //print values 
-    for (ClusterQualityMeasure m : m_metrics) {
-      String val = "";
-
-      val = m.getName() + "=\t";
-      if (m.getOverallValue() != null) {
-        if (m.getOverallValue().equals(Double.NaN)) {
-          val += "undef";
-        }
-        else {
-          val += String.valueOf(m.getOverallValue());
-        }
+      if (m_clusterer.getSubspaceClustering() == null) {
+        clusterList = new ArrayList<Cluster>();
       } else {
-        val = "";
-        if (m.getCustomOutput() != null) {
-          val += m.getCustomOutput();
-          val = val.replace('\n', '\t');
+        clusterList = (ArrayList<Cluster>)m_clusterer.getSubspaceClustering();
+      }
+
+      //calculate each quality metric
+      for (ClusterQualityMeasure m : m_metrics) {
+        m.calculateQuality(clusterList, m_dataSet, m_trueClusters);
+      }
+
+      //print values 
+      for (ClusterQualityMeasure m : m_metrics) {
+        String val = "";
+
+        val = m.getName() + "=\t";
+        if (m.getOverallValue() != null) {
+          if (m.getOverallValue().equals(Double.NaN)) {
+            val += "undef";
+          }
+          else {
+            val += String.valueOf(m.getOverallValue());
+          }
         } else {
-          val += "null";
+          val = "";
+          if (m.getCustomOutput() != null) {
+            val += m.getCustomOutput();
+            val = val.replace('\n', '\t');
+          } else {
+            val += "null";
+          }
+        }
+        if (val != ""){
+          results.append(val + "\t");
         }
       }
-      if (val != ""){
-        results.append(val + "\t");
-      }
     }
-
     return results;
   }
 

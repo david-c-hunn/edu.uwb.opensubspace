@@ -32,18 +32,6 @@ public class SepcCluster extends Cluster {
 		Arrays.fill(m_uppBounds, Double.MAX_VALUE);
 	}
 
-	/**
-	 * Copy Constructor.
-	 * @param other A SepcCluster to copy.
-	 */
-	public SepcCluster(SepcCluster other) {
-		super(other.m_subspace, other.m_objects);
-		m_lowBounds = Arrays.copyOf(other.m_lowBounds, other.m_lowBounds.length);
-		m_uppBounds = Arrays.copyOf(other.m_uppBounds, other.m_uppBounds.length);
-		m_width = other.m_width;
-		m_beta = other.m_beta;
-	}
-
 	public double getWidth() {
 		return m_width;
 	}
@@ -153,7 +141,7 @@ public class SepcCluster extends Cluster {
 	 * where n is the number of points in the cluster and d is the number of 
 	 * congregating dimensions of the cluster.
 	 * 
-	 * TODO: For lage dimensional data sets quality needs to be a big double
+	 * TODO: For large dimensional data sets quality needs to be a big double
 	 * 
 	 * @return The quality of the calling SepcCluster.
 	 */
@@ -164,7 +152,11 @@ public class SepcCluster extends Cluster {
 		for (int i = 0; i < m_subspace.length; ++i) {
 			numDims += m_subspace[i] ? 1 : 0;
 		}
-		retVal = m_objects.size() * Math.pow(1.0/m_beta, numDims);
+		if (numDims > 0) {
+		  retVal = m_objects.size() * Math.pow(1.0/m_beta, numDims);
+		} else {
+		  retVal = 0.0;
+		}
 
 		return retVal;
 	}

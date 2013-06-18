@@ -53,6 +53,7 @@ public class NormalPDFDistance extends uwb.subspace.sarc.Distance {
     double dist = 0.0;
     
     for (int i = 0; i < b.length; ++i) {
+      //dist += weight[i] * Math.abs(a[i] - b[i]);
       dist += weight[i] * Math.pow(a[i] - b[i], 2);
     }
     
@@ -64,7 +65,7 @@ public class NormalPDFDistance extends uwb.subspace.sarc.Distance {
     double dist = 0.0;
     
     for (int i = 0; i < b.length; ++i) {
-      dist += - Math.pow(a[i] - b[i], 2) / (2 * spread[i]);
+      dist += - Math.exp(- Math.pow(a[i] - b[i], 2) / (2 * spread[i])); 
     }
     dist = Math.exp(dist);    
          

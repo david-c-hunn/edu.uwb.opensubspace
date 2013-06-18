@@ -223,36 +223,40 @@ public class SEPC {
 	 */
 	public List<Cluster> findClusters() {
 		SepcCluster   currCluster;
-		double    bestQual;
+		SepcCluster   bestCluster;
 		boolean       searching = true;
 		boolean       keepCluster;
 		int           numClustersFoundLastTry = 0;
 
 		clusters = new ArrayList<Cluster>();
 		while (searching) {
-			bestQual = 0.0;
-
-			for (int trial = 0; trial < k; ++trial) {
+		  bestCluster = new SepcCluster(new boolean[numDims], 
+          new ArrayList<Integer>());
+		  for (int trial = 0; trial < k; ++trial) {
 				currCluster = buildCluster();
-				keepCluster = isKeeper(currCluster, bestQual);
+				keepCluster = isKeeper(currCluster, bestCluster.quality());
 				if (keepCluster) {
-					if (disjoint) {
-						allocatePoints(currCluster);
-					} else {
+					if (! disjoint) {
 						removeSubClusters(currCluster);
+						clusters.add(currCluster);
 					}
-					if (bestQual < currCluster.quality()) {
-						bestQual = currCluster.quality();
-					}
-					clusters.add(new SepcCluster(currCluster));
+					if (bestCluster.quality() < currCluster.quality()) {
+						bestCluster = currCluster;
+					} 
 				}
 			}
-
+			if (disjoint) {
+			  // make sure we found a cluster other than the default best cluster
+			  if (bestCluster.m_objects.size() > 0) {
+			    allocatePoints(bestCluster);
+			    clusters.add(bestCluster);
+			  }
+			}
 			if (clusters.size() <= numClustersFoundLastTry) {
 				searching = false;
 			} else {
 				numClustersFoundLastTry = clusters.size();
-				searching = stillSearching(bestQual, clusters.size());
+				searching = stillSearching(bestCluster.quality(), clusters.size());
 			}
 		}
 
@@ -261,11 +265,11 @@ public class SEPC {
 
 	/**
 	 * 
-	 * @param currCluster
+	 * @param cluster
 	 */
-	private void allocatePoints(SepcCluster currCluster) {
-		for (int i = 0; i < currCluster.m_objects.size(); ++i) {
-			int position = currCluster.m_objects.get(i);
+	private void allocatePoints(SepcCluster cluster) {
+		for (int i = 0; i < cluster.m_objects.size(); ++i) {
+			int position = cluster.m_objects.get(i);
 			data.get(position).allocated = true;
 		}
 	}
@@ -334,14 +338,15 @@ public class SEPC {
 	 */
 	private SepcCluster buildCluster() {
 		List<Integer> samp = randomSample(s);
-		SepcCluster c = new SepcCluster(new boolean[numDims], new ArrayList<Integer>());
+		SepcCluster c = new SepcCluster(new boolean[numDims], 
+		    new ArrayList<Integer>());
 		int position = 0;
 
 		c.setBeta(beta);
 		c.setWidth(width);
 		if (c.calcBounds(samp, data)) {
 			for (DataPoint d : data) {
-				if (!d.allocated) { // already added to a cluster, only used in disjoint mode
+				if (! d.allocated) { // already added to a cluster, only used in disjoint mode
 					if (c.bounds(d.instance)) {
 						c.m_objects.add(position);
 					}
@@ -363,6 +368,7 @@ public class SEPC {
 	 */
 	private boolean stillSearching(double bestQual, int numClustersFound) {
 		int ptsRemaining = numPointsRemaining();
+		int minClusterSize = (int)(getAlpha() * data.size());
 		
 		if (bestQual < this.mu_0) {
 			//System.out.println("mu < mu_0 -> Done searching!");
@@ -373,7 +379,7 @@ public class SEPC {
 		} else if (ptsRemaining < s) {
 			//System.out.println("Fewer than s points left unclustered -> Done searching!");
 			return false;
-		} else if (ptsRemaining < (int)(getAlpha() * data.size())) {
+		} else if (ptsRemaining < minClusterSize) {
 			//System.out.println("Fewer than alpha of the data left unclustered -> Done searching!");
 			return false;
 		} 

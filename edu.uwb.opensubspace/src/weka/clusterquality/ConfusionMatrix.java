@@ -19,11 +19,7 @@ public class ConfusionMatrix extends ClusterQualityMeasure {
   private int[][] m_matrix;
   
   private List<String> m_classes;
-  
-  public ConfusionMatrix() {
-    // TODO Auto-generated constructor stub
-  } 
-
+   
   @Override
   public void calculateQuality(ArrayList<Cluster> clusterList,
       Instances instances, ArrayList<Cluster> trueclusters) {
@@ -33,6 +29,7 @@ public class ConfusionMatrix extends ClusterQualityMeasure {
     
     // TODO: check for invalid inputs
     m_matrix = new int[instances.numClasses()][clusterList.size()];
+    m_matrix = new int[clusterList.size()][instances.numClasses()];
     m_classes = new ArrayList<String>(instances.numClasses());
     
     // initialize all matrix entries to zero
@@ -46,15 +43,15 @@ public class ConfusionMatrix extends ClusterQualityMeasure {
       for (int obj : foundCluster.m_objects) {
         Instance inst = instances.instance(obj);
         String the_class = inst.stringValue(class_idx);
-        row = m_classes.indexOf(the_class);
-        if (row < 0) {
+        column = m_classes.indexOf(the_class);
+        if (column < 0) {
           m_classes.add(the_class);
-          row = m_classes.indexOf(the_class);
+          column = m_classes.indexOf(the_class);
         }
-        row = m_classes.indexOf(the_class);
+        column = m_classes.indexOf(the_class);
         m_matrix[row][column]++;
       }
-      column++;
+      row++;
     }
   }
   
@@ -62,11 +59,17 @@ public class ConfusionMatrix extends ClusterQualityMeasure {
   public String getCustomOutput() {
     StringBuilder ret_val = new StringBuilder();
     
+    ret_val.append("\t");
+    for (String label : m_classes) {
+      ret_val.append(label + "\t");
+    }
+    ret_val.append("\n");
+    
     for (int r = 0; r < m_matrix.length; ++r) {
-      ret_val.append(m_classes.get(r) + " ");
+      ret_val.append("F" + r + ":\t");
       for (int c = 0; c< m_matrix[r].length; ++c) {
         ret_val.append(m_matrix[r][c]);
-        ret_val.append(" ");
+        ret_val.append("\t");
       }
       ret_val.append('\n');
     }

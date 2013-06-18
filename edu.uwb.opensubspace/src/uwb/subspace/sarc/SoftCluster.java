@@ -6,6 +6,7 @@ import i9.subspace.base.Cluster;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.math.stat.descriptive.moment.Variance;
@@ -30,13 +31,12 @@ public class SoftCluster extends Cluster {
 	/** The center the of the cluster */
 	public double[] m_center;
 	
-	/** The standard deviation of the cluster along each dimension */
+	/** The sample variance of the cluster along each dimension */
 	public double[] m_spread;
 	
 	/** 
 	 * The weights associated with each attribute (or dimension). The sum of the
 	 * elements of this vector is one.
-	 *  
 	 */
 	public double[] m_weights;
 	
@@ -51,15 +51,10 @@ public class SoftCluster extends Cluster {
 	 */
 	private double m_lambda = 0.1;
 	
-	/** 
-	 *  Also cache the scores for each object, since, only later are outliers
-	 *  discarded.
-	 */
+	/** Cache the scores for each object. */
 	public double[] m_objScore;
 	
-	/** 
-   * Cache the distance to each object.
-   */
+	/** Cache the distance to each object. */
 	public double[] m_objDistances;
 	
 	/** Used to calculate the mean along a given dimension. */
@@ -75,26 +70,9 @@ public class SoftCluster extends Cluster {
     return m_lambda;
   }
 
-  public void setLambda(double m_lambda) {
-    this.m_lambda = m_lambda;
+  public void setLambda(double lambda) {
+    this.m_lambda = lambda;
   }
-
-	/** 
-	 * Copy Constructor.
-	 * @param other Another SoftCluster to deep copy.
-	 */
-	public SoftCluster(SoftCluster other) {
-	  super(other.m_subspace.clone(),new ArrayList<Integer>(other.m_objects)); 
-	  this.m_center = Arrays.copyOf(other.m_center, other.m_center.length);
-	  this.m_spread = Arrays.copyOf(other.m_spread, other.m_spread.length);
-	  this.m_weights = Arrays.copyOf(other.m_weights, other.m_weights.length);
-	  this.m_objScore = Arrays.copyOf(other.m_objScore, other.m_objScore.length);
-	  this.m_objDistances = 
-	      Arrays.copyOf(other.m_objDistances, other.m_objDistances.length);
-	  this.m_dataSet = other.m_dataSet;
-	  this.setLambda(other.getLambda());
-	  this.m_distance = other.m_distance;
-	}
 	
 	/**
 	 * Constructor.
@@ -127,15 +105,32 @@ public class SoftCluster extends Cluster {
 	  m_objScore = new double[m_dataSet.getInstanceCount()]; // allocate storage to cache each object score
 		m_score = -1;                                          // Make sure quality is calc'd with next request
 		
-		//m_center = m_dataSet.instance(sample.get(0)).toDoubleArray();
 		// find the mean and variance along each dimension
 		for (int c = 0; c < discSet.size(); ++c) {
-		  m_center[c] = m_meanCalc.evaluate(discSet.get(c));
+		  // some code to test a heuristic to speed up the algorithm
+	    // check to make sure that at least one of the dimensions is congregating
+//		  double min, max;
+//
+//		  Arrays.sort(discSet.get(c));
+//      min = discSet.get(c)[0];
+//      max = discSet.get(c)[discSet.get(c).length - 1];
+//      m_subspace[c] = (Math.abs(max - min) > 0.1) ? false : true;
+		  
+      // end heuristic insertion
+      m_subspace[c] = true;
+      m_center[c] = m_meanCalc.evaluate(discSet.get(c));
 		  m_spread[c] = m_varCalc.evaluate(discSet.get(c), m_center[c]) + 0.00001; // add a small constant to prevent zeros 
 		}
 		calcWeights();
 		
-		return true;
+		// if at least one subspace dimension meets the requirements return true
+    for (int i = 0; i < m_subspace.length; ++i) {
+      if (m_subspace[i]) {
+        return true;
+      }
+    }
+    m_score = 0.0; // save time on quality calc, we want to reject this cluster
+		return false;
 	}
 
 	/**
@@ -200,7 +195,7 @@ public class SoftCluster extends Cluster {
     double prodStdevs = 1.0; // the product of the std dev in each dimension
     int count = 0;      
     
-    if (m_score > 0) {
+    if (m_score >= 0) {
       return m_score; // return the cached value
     }
     
@@ -270,6 +265,7 @@ public class SoftCluster extends Cluster {
   public String toString () {
     StringBuilder retVal = new StringBuilder();
     
+    retVal.append("lambda= " + m_lambda + " ");
     retVal.append("center: [ ");
     for (int i = 0; i < m_center.length; i++) {
       retVal.append(String.format("%.2f", m_center[i]));
