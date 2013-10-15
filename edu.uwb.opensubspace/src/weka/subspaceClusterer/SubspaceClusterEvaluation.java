@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.Iterator;
 
 import weka.clusterquality.ClusterQualityMeasure;
 import weka.core.Instances;
@@ -60,7 +61,33 @@ import weka.filters.unsupervised.attribute.Remove;
  */
 public class SubspaceClusterEvaluation 
 implements Serializable {
+  public class OptionsIterator implements Iterator<String[]> {
 
+    @Override
+    public boolean hasNext() {
+      // TODO Auto-generated method stub
+      return false;
+    }
+
+    @Override
+    public String[] next() {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    @Override
+    public void remove() {
+      // TODO Auto-generated method stub
+      
+    }
+    
+  }
+  
+  /** Determines if offset is multiplied or added. */
+  public enum Operator {
+    ADD, MULTIPLY
+  }
+  
 	/** for serialization */
 	static final long serialVersionUID = -830188327319128005L;
 

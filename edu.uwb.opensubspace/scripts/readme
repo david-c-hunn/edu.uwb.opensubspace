@@ -29,6 +29,16 @@ chmod +x script-name
 Useful for copying files to/from the server. A little easier than ftp.
 scp sepc-synth-norm.sh hunnd@uw1-320-lab.uwb.edu:/net/metis/home2/hunnd/edu.uwb.opensubspace/scripts
 
-scp hunnd@uw1-320-lab.uwb.edu:/net/metis/home2/hunnd/edu.uwb.opensubspace/output/Sarc-real . 
+scp hunnd@uw1-320-lab.uwb.edu:/net/metis/home2/hunnd/edu.uwb.opensubspace/output/Doc-synth . 
 
 scp evaluator.jar hunnd@uw1-320-lab.uwb.edu:/net/metis/home2/hunnd/edu.uwb.opensubspace/
+
+scp clique-real.sh hunnd@uw1-320-lab.uwb.edu:/net/metis/home2/hunnd/edu.uwb.opensubspace/scripts
+
+Improvements
+------------
+Ditch the shell scripts. Write a java program that will take a clusterer class 
+name and a string of arfuments and launch a process. Also, look into using
+parameter tuning functionality built into OpenSubspace. They have a nice 
+parameter tuning feature in the GUI, so, you just need to find it and see
+how to adapt it (if necesary).

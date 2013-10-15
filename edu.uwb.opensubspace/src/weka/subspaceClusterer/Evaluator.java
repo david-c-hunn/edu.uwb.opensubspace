@@ -115,6 +115,12 @@ public class Evaluator implements Serializable {
   /** The data set to perform the clustering on. */
   private Instances m_dataSet;
 
+  /** 
+   * If this is set to true, then the data set is normalized before
+   * the clusterer is run.
+   */
+  private boolean m_normalize = false;
+  
   /** The metrics to perform on the clustering result. */
   private ArrayList<ClusterQualityMeasure> m_metrics;
 
@@ -148,7 +154,11 @@ public class Evaluator implements Serializable {
       m_timeLimit = t;
     }
   }
-
+  
+  public void setNormalize(boolean b) {
+    m_normalize = b;
+  }
+  
   /**
    * return the results of clustering.
    * @return a string detailing the results of clustering a data set
@@ -276,8 +286,10 @@ public class Evaluator implements Serializable {
     try {
       String scName = Utils.getOption("sc", options); 
       if (scName.length() == 0) {
-        System.err.println("No algorithm specified. Using the default" +
+        if (this.m_clusterer == null) {
+          System.err.println("No algorithm specified. Using the default" +
             " (SEPC). Specify an algorithm with -sc.");
+        }
       } else {
         this.setClusterer(scName);  
       }
@@ -288,15 +300,15 @@ public class Evaluator implements Serializable {
 
       String dataSetFileName = Utils.getOption('t', options);
       if (dataSetFileName.length() == 0) {
-        throw new Exception("No input file, use -t");
+        if (m_dataSet == null) {
+          throw new Exception("No input file, use -t");
+        }
       } else {
         setDataSet(dataSetFileName);
       }
 
       String measureOptionString = Utils.getOption('M', options);
-      if (measureOptionString.length() == 0) {
-        System.err.println("No metrics set. Use -M to specify quality metrics.");
-      } else {
+      if (measureOptionString.length() > 0) {
         setMetrics(measureOptionString);
       }
 
@@ -315,6 +327,10 @@ public class Evaluator implements Serializable {
       String timeLimit = Utils.getOption("timelimit", options);
       if (timeLimit.length() > 0 ) {
         setTimeLimit(Long.parseLong(timeLimit));
+      }
+      boolean b = Boolean.parseBoolean(Utils.getOption("normalize", options));
+      if (b) {
+        this.setNormalize(b);
       }
 
     } catch (Exception e) {
@@ -395,8 +411,9 @@ public class Evaluator implements Serializable {
     m_clusteringResults.append(m_clusterer.getParameterString() + "\t");
     m_clusteringResults.append(m_dataSet.relationName() + "\t");
 
-    NormalizeDataSet();
-
+    if (m_normalize) {
+      NormalizeDataSet();
+    }
     // run the clusterer
     start = System.currentTimeMillis();
     if (runClusterer()) { // check to make sure there is something to eval
@@ -495,7 +512,7 @@ public class Evaluator implements Serializable {
       e.printStackTrace();
     }
 
-    executor.shutdownNow();
+    executor.shutdown();
 
     // Assume that no timeout means the clusterer ran successfully
     return !timeout;
