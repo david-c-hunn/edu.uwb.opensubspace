@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project edu.uwb.opensubspace">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <target name="create_run_jar">
+        <jar destfile="/Users/dave/git/repo/edu.uwb.opensubspace/experiment.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="weka.subspaceClusterer.Experiment"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="/Users/dave/git/repo/edu.uwb.opensubspace/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/commons-math-1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/commons-math3-3.1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/i9-subspace.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/j3dcore.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/j3dutils.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/Jama.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/jsc.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/vecmath.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Users/dave/git/repo/edu.uwb.opensubspace/library/weka.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Applications/eclipse/plugins/org.junit_4.10.0.v4_10_0_v20120426-0900/junit.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="/Applications/eclipse/plugins/org.hamcrest.core_1.1.0.v20090501071000.jar"/>
+        </jar>
+    </target>
+</project>
