@@ -9,11 +9,11 @@ import i9.data.core.DBStorage;
 import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Random;
 import java.util.Set;
 
@@ -101,7 +101,7 @@ public class SEPC {
 	}
 
 	public void setData(DBStorage db) {
-		data = new ArrayList<DataPoint>(db.getSize());
+	  data = new ArrayList<DataPoint>(db.getSize());
 		for (Instance inst : db) {
 			data.add(new DataPoint(inst));
 		}
@@ -111,7 +111,7 @@ public class SEPC {
 		if (a > 0.0 && a < 1.0) {
 			alpha = a;
 		} else {
-			System.out.println("Attempted to set alpha to an invalid value.");
+			System.err.println("Attempted to set alpha to an invalid value.");
 		}
 	}
 	public double getAlpha() {
@@ -122,7 +122,7 @@ public class SEPC {
 		if (b > 0.0 && b < 1.0) {
 			this.beta = b;
 		} else {
-			System.out.println("Attempted to set beta to an invalid value.");
+			System.err.println("Attempted to set beta to an invalid value.");
 		}
 	}
 	public double getBeta() {
@@ -133,7 +133,7 @@ public class SEPC {
 		if (w > 0.0) {
 			this.width = w;
 		} else {
-			System.out.println("Attempted to set width to an invalid value.");
+			System.err.println("Attempted to set width to an invalid value.");
 		}
 	}
 	public double getW() {
@@ -230,8 +230,7 @@ public class SEPC {
 
 		clusters = new ArrayList<Cluster>();
 		while (searching) {
-		  bestCluster = new SepcCluster(new boolean[numDims], 
-          new ArrayList<Integer>());
+		  bestCluster = new SepcCluster(new boolean[numDims], new ArrayList<Integer>());
 		  for (int trial = 0; trial < k; ++trial) {
 				currCluster = buildCluster();
 				keepCluster = isKeeper(currCluster, bestCluster.quality());
@@ -279,16 +278,11 @@ public class SEPC {
 	 * @param cluster
 	 */
 	private void removeSubClusters(SepcCluster cluster) {
-		List<Cluster> toRemove = new ArrayList<Cluster>();
-
-		for (Cluster clust : clusters) {
-			SepcCluster c = (SepcCluster)clust;
-			if (c.overlap(cluster, maxUnmatchedSubspaces) > maxOverlap) {
-				toRemove.add(c);
-			}
-		}
-		for (Cluster clust : toRemove) {
-			clusters.remove(clust);
+		for (ListIterator<Cluster> iter = clusters.listIterator(); iter.hasNext();) {
+		  SepcCluster c = (SepcCluster)iter.next();
+		  if (c.overlap(cluster, maxUnmatchedSubspaces) > maxOverlap) {
+        iter.remove();
+      }
 		}
 	}
 

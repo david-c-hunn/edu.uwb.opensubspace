@@ -16,7 +16,7 @@ import i9.subspace.base.Cluster;
 import i9.subspace.clique.CLIQUE;
 import i9.subspace.clique.Cover;
 
-public class Clique extends SubspaceClusterer implements OptionHandler{
+public class Clique extends SubspaceClusterer implements OptionHandler {
 
 	private static final long serialVersionUID = 7923724410794833810L;
 

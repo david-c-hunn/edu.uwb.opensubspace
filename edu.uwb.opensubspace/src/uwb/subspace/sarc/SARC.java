@@ -283,13 +283,7 @@ public class SARC {
       Class<?> distClass = Class.forName("uwb.subspace.sarc." 
           + distanceClassName);
       dist = (Distance)distClass.newInstance();
-    } catch (InstantiationException e1) {
-      System.err.println("Not a valid subspace distance class: " +
-          "uwb.subspace.sarc." + distanceClassName);
-    } catch (IllegalAccessException e1) {
-      System.err.println("Not a valid subspace distance class: " +
-          "uwb.subspace.sarc." + distanceClassName);
-    } catch (ClassNotFoundException e) {
+    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
       System.err.println("Not a valid subspace distance class: " +
           "uwb.subspace.sarc." + distanceClassName);
     } 
@@ -376,7 +370,7 @@ public class SARC {
       }
     }
     
-    exec.shutdownNow();
+    exec.shutdown();
     return m_clusters;
   }
 

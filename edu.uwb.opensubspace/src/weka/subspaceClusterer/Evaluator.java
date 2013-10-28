@@ -217,13 +217,7 @@ public class Evaluator implements Serializable {
         Class<?> c = Class.forName("weka.clusterquality." 
             + classStrings[i]);
         m_metrics.add((ClusterQualityMeasure)c.newInstance());
-      } catch (InstantiationException e1) {
-        System.err.println("Not a valid subspace measure class: " +
-            "weka.clusterquality."+classStrings[i]);
-      } catch (IllegalAccessException e1) {
-        System.err.println("Not a valid subspace measure class: " +
-            "weka.clusterquality."+classStrings[i]);
-      } catch (ClassNotFoundException e) {
+      } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
         System.err.println("Not a valid subspace measure class: " +
             "weka.clusterquality."+classStrings[i]);
       }
@@ -499,12 +493,14 @@ public class Evaluator implements Serializable {
     boolean timeout = false;
 
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    Future<Void> future = executor.submit(new Task(m_clusterer, removeClass(m_dataSet)));
+    Future<Void> future = executor.submit(new Task(m_clusterer, 
+        removeClass(m_dataSet)));
 
     try {
       future.get(m_timeLimit, TimeUnit.MINUTES);
     } catch (TimeoutException e) {
       // This is not an error. This is our timeout.
+      future.cancel(true);
       timeout = true;
     } catch (InterruptedException e) {
       e.printStackTrace();
@@ -533,7 +529,6 @@ public class Evaluator implements Serializable {
       sc.buildSubspaceClusterer(dataSet);
       return null;
     }
-
   }
 
   /**
