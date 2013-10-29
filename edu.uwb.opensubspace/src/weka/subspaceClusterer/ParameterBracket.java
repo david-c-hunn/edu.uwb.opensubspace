@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 /**
- * This class holds info about running otimization experiments for a 
+ * This class holds parameter info about running optimization experiments for a 
  * subspace clustering algorithm.
  * @author dave
  *
@@ -65,9 +65,9 @@ public class ParameterBracket implements Serializable, Iterable<String[]> {
   }
   
   public void addParameter(String paramStr) {
-    String[] params = paramStr.split("\\s");
-    
-    
+    // TODO: implement method
+    throw new UnsupportedOperationException("Method not implented, yet.");
+    //String[] params = paramStr.split("\\s");
   }
   
   public OptionsIterator iterator() {
