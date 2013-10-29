@@ -7,10 +7,8 @@
 package uwb.subspace.sarc;
 import i9.data.core.DBStorage;
 import i9.data.core.DataSet;
-import i9.data.core.Instance;
 import i9.subspace.base.Cluster;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -22,8 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import weka.core.Instances;
-import weka.gui.visualize.Plot2D;
+import org.apache.commons.math3.util.ArithmeticUtils;
 
 
 
@@ -331,10 +328,7 @@ public class SARC {
               currCluster = sc;
             }
           }
-        } catch (InterruptedException e) {
-          System.err.println(e.getMessage());
-          e.printStackTrace();
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
           System.err.println(e.getMessage());
           e.printStackTrace();
         }
@@ -374,9 +368,6 @@ public class SARC {
     return m_clusters;
   }
 
-  /**
-   * 
-   */
   private void printFoundClusters() {
     System.out.println();
     System.out.println("Found Clusters:");
@@ -407,18 +398,12 @@ public class SARC {
 
   }
 
-  /**
-   * 
-   * @author dave
-   *
-   */
   private class ClusterBuilder implements Callable<SoftCluster> {
     SoftCluster cluster;
 
     // Constructor
     ClusterBuilder() {
-      cluster = new SoftCluster(new boolean[m_dataSet.numAttributes()],
-          new ArrayList<Integer>(), m_dataSet, m_distance);
+      cluster = new SoftCluster(m_dataSet, m_distance);
     }
 
     @Override
@@ -452,9 +437,6 @@ public class SARC {
       }
     }
   }
-
-
-
 
   /**
    * Assigns objects to the cluster they score highest with. Equivalently,
@@ -523,10 +505,7 @@ public class SARC {
    */
   private SoftCluster buildCluster() {
     List<Integer> samp = randomSample(m_sampleSize);
-    SoftCluster c = new SoftCluster(new boolean[m_dataSet.getNumDimensions()], 
-        new ArrayList<Integer>(), 
-        m_dataSet, 
-        m_distance);
+    SoftCluster c = new SoftCluster(m_dataSet, m_distance);
 
     c.calc(samp);
 
@@ -623,10 +602,8 @@ public class SARC {
       final int aNumInstances, final int aNumDims) {
     int m = (int)Math.ceil(anAlpha * aNumInstances);
     int l = (int)Math.floor(aBeta * m);
-    double firstTerm = choose(m, anS).doubleValue() 
-        / choose(aNumInstances, anS).doubleValue(); 
-    double secondTerm = choose(l, anS).doubleValue()
-        / choose(m, anS).doubleValue();
+    double firstTerm = (double)choose(m, anS) / (double)choose(aNumInstances, anS); 
+    double secondTerm = (double)choose(l, anS) / (double)choose(m, anS);
     double Ptrial =  firstTerm * (Math.pow(1.0 - secondTerm, aNumDims));
     int retVal = (int)Math.round(Math.log10(anEpsilon) 
         / Math.log10(1 - Ptrial));
@@ -635,21 +612,14 @@ public class SARC {
   }
 
   /**
-   * Code obtained from: 
-   * http://stackoverflow.com/questions/2201113/combinatoric-n-choose-r-in-java-math
-   * 
    * @param N
    * @param K
-   * @return
-   */
-  private static BigInteger choose(final int N, final int K) {
-    BigInteger ret = BigInteger.ONE;
+   * @return N choose K.
+   */  
+  private static long choose(final int N, final int K) {
+    long answer = ArithmeticUtils.binomialCoefficient(N, K);
 
-    for (int k = 0; k < K; k++) {
-      ret = ret.multiply(BigInteger.valueOf(N-k))
-          .divide(BigInteger.valueOf(k+1));
-    }
-    return ret;
+    return answer;  
   }
 
   /**
@@ -690,8 +660,6 @@ public class SARC {
 
     return new ArrayList<Integer>(sample);
   }
-
-
 
 }
 

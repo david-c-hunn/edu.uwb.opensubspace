@@ -420,7 +420,6 @@ public class SEPC {
 	}
 
 	/**
-	 * 
 	 * @param N
 	 * @param K
 	 * @return N choose K.

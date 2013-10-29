@@ -75,15 +75,15 @@ public class SoftCluster extends Cluster {
 	
 	/**
 	 * Constructor.
-	 * @param subspace
-	 * @param objects
+	 *
+	 * @param data is the data set that the cluster's objects will be drawn from.
+	 * @param d is a distance metric object.
 	 */
-	public SoftCluster(boolean[] subspace, List<Integer> objects, DataSet data, 
-	    Distance d) {
-		super(subspace, objects);
-		m_center = new double[subspace.length];
-		m_spread = new double[subspace.length];
-		m_weights = new double[subspace.length];
+	public SoftCluster(DataSet data, Distance d) {
+		super(new boolean[data.numAttributes()], new ArrayList<Integer>());
+		m_center = new double[super.m_subspace.length];
+		m_spread = new double[super.m_subspace.length];
+		m_weights = new double[super.m_subspace.length];
 		m_dataSet = data;
 		m_distance = (d != null) ? d : new NormalPDFDistance();
 		m_varCalc.setBiasCorrected(true);
