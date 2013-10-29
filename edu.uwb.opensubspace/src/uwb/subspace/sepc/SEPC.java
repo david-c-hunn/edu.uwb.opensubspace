@@ -6,11 +6,10 @@
 
 package uwb.subspace.sepc;
 import i9.data.core.DBStorage;
-import i9.data.core.Instance;
+import i9.data.core.DataSet;
 import i9.subspace.base.Cluster;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
@@ -26,35 +25,23 @@ import org.apache.commons.math3.util.ArithmeticUtils;
  * @version 1.0
  */
 public class SEPC {	
-	/**
-	 * A simple data structure to hold a reference to an instance and keep track
-	 * of whether it has been used in a cluster.
-	 * @author Dave Hunn
-	 * @version 1.0
-	 */
-	public class DataPoint {
-		public Instance instance;
-		public boolean allocated = false;
-		public DataPoint(Instance i) {
-			instance = i;
-		}
-	}
 
-	private List<DataPoint> data;                // The data to be analyzed
-	private List<Cluster>   clusters;            // The discovered clusters
-	private double          alpha       = 0.08;  // minimum cluster density
-	private double          beta        = 0.25;  // trade-off between the number of dimensions and the number of instances 
-	private double          epsilon     = 0.01;  // allowable probability of failing to find a cluster that exists 
-	private double          width       = 200.0; // max cluster width 
-	private int             k           = 2048;  // number trials per cluster 
-	private int             s           = 2;     // number of instances sampled per trial
-	private double          mu_0        = 100.0; // minimum cluster quality
-	private int             numClusters = 0;     // the number of clusters to look for
-	private int             numDims     = 0;
-	private Random          gen;
-	private double          maxOverlap  = 0.75;  
-	private int             maxUnmatchedSubspaces = 4;
-	private boolean         disjoint    = false;  // if this is true then each point may belong to at most one cluster
+	private boolean[]       m_allocated;           // This array keeps track of which objects have been assigned to clusters
+	private DataSet         m_dataSet;             // The data to be analyzed
+	private List<Cluster>   m_clusters;            // The discovered clusters
+	private double          m_alpha       = 0.08;  // minimum cluster density
+	private double          m_beta        = 0.25;  // trade-off between the number of dimensions and the number of instances 
+	private double          m_epsilon     = 0.01;  // allowable probability of failing to find a cluster that exists 
+	private double          m_width       = 200.0; // max cluster width 
+	private int             m_k           = 2048;  // number trials per cluster 
+	private int             m_s           = 2;     // number of instances sampled per trial
+	private double          m_minQual     = 100.0; // minimum cluster quality
+	private int             m_numClusters = 0;     // the number of clusters to look for
+	private int             m_numDims     = 0;
+	private Random          m_RNG;
+	private double          m_maxOverlap  = 0.75;  
+	private int             m_maxUnmatchedSubspaces = 4;
+	private boolean         m_disjoint    = false;  // if this is true then each point may belong to at most one cluster
 
 	/**
 	 * 
@@ -86,134 +73,132 @@ public class SEPC {
 		this.setMaxOverlap(maxOverlap);
 		this.setMaxUnmatchedSubspaces(maxUnmatchedSubspaces);
 		this.setData(dbStorage);
-		disjoint = disjointMode;
-		this.numDims = dbStorage.getDataSet().getNumDimensions();
-		this.gen = new Random();
+		m_disjoint = disjointMode;
+		this.m_numDims = dbStorage.getDataSet().getNumDimensions();
+		this.m_RNG = new Random();
 
-		this.s = calcDiscrimSetSize(numDims, this.beta);
-		this.k = calcNumTrials(this.alpha, this.beta, this.epsilon, this.s, 
-				this.data.size(), numDims);
-		double otherMu_0 = SepcCluster.quality((int)Math.round(numDims*minSubspaceSize), 
-				                               (int)Math.round(data.size()*this.alpha), 
-				                               this.beta);
-		if (this.mu_0 < otherMu_0)
-			this.mu_0 = otherMu_0; 
+		this.m_s = calcDiscrimSetSize(m_numDims, this.m_beta);
+		this.m_k = calcNumTrials(this.m_alpha, this.m_beta, this.m_epsilon, this.m_s, 
+				this.m_dataSet.numInstances(), m_numDims);
+		double otherMu_0 = SepcCluster.quality((int)Math.round(m_numDims*minSubspaceSize), 
+				                               (int)Math.round(m_dataSet.numInstances()*this.m_alpha), 
+				                               this.m_beta);
+		if (this.m_minQual < otherMu_0)
+			this.m_minQual = otherMu_0; 
 	}
 
 	public void setData(DBStorage db) {
-	  data = new ArrayList<DataPoint>(db.getSize());
-		for (Instance inst : db) {
-			data.add(new DataPoint(inst));
-		}
+	  m_dataSet = db.getDataSet();
+	  m_allocated = new boolean[m_dataSet.numInstances()];
 	}
 
 	public void setAlpha(double a) {
 		if (a > 0.0 && a < 1.0) {
-			alpha = a;
+			m_alpha = a;
 		} else {
 			System.err.println("Attempted to set alpha to an invalid value.");
 		}
 	}
 	public double getAlpha() {
-		return alpha;
+		return m_alpha;
 	}
 
 	public void setBeta(double b) {
 		if (b > 0.0 && b < 1.0) {
-			this.beta = b;
+			this.m_beta = b;
 		} else {
 			System.err.println("Attempted to set beta to an invalid value.");
 		}
 	}
 	public double getBeta() {
-		return beta;
+		return m_beta;
 	}
 
 	public void setW(double w) {
 		if (w > 0.0) {
-			this.width = w;
+			this.m_width = w;
 		} else {
 			System.err.println("Attempted to set width to an invalid value.");
 		}
 	}
 	public double getW() {
-		return width;
+		return m_width;
 	}
 
 	public void setMu_0(double mu) {
 		if (mu >= 0.0 ) {
-			this.mu_0 = mu;
+			this.m_minQual = mu;
 		} else {
 			System.out.println("Attempted to set mu_0 to an invalid value.");
 		}
 	}
 
 	public double getMu_0() {
-		return mu_0;
+		return m_minQual;
 	}
 	
 	public int getNumClusters() {
-		return numClusters;
+		return m_numClusters;
 	}
 
 	public void setNumClusters(int numClusters) {
-		this.numClusters = numClusters;
+		this.m_numClusters = numClusters;
 	}
 
 	public double getEpsilon() {
-		return epsilon;
+		return m_epsilon;
 	}
 
 	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
+		this.m_epsilon = epsilon;
 	}
 
 	public double getMaxOverlap() {
-		return maxOverlap;
+		return m_maxOverlap;
 	}
 
 	/**
    * @return the k
    */
   public int getK() {
-    return k;
+    return m_k;
   }
 
   /**
    * @param k the k to set
    */
   public void setK(int k) {
-    this.k = k;
+    this.m_k = k;
   }
 
   /**
    * @return the s
    */
   public int getS() {
-    return s;
+    return m_s;
   }
 
   /**
    * @param s the s to set
    */
   public void setS(int s) {
-    this.s = s;
+    this.m_s = s;
   }
   
   public void setMaxOverlap(double maxOverlap) {
 		if (maxOverlap >= 0.0 && maxOverlap < 1.0) {
-			this.maxOverlap = maxOverlap;
+			this.m_maxOverlap = maxOverlap;
 		} else {
 			System.out.println("Attempted to set maxOverlap to an invalid value.");
 		}
 	}
 
 	private int getMaxUnmatchedSubspaces() {
-		return maxUnmatchedSubspaces;
+		return m_maxUnmatchedSubspaces;
 	}
 
 	private void setMaxUnmatchedSubspaces(int maxUnmatchedSubspaces) {
-		this.maxUnmatchedSubspaces = maxUnmatchedSubspaces;
+		this.m_maxUnmatchedSubspaces = maxUnmatchedSubspaces;
 	}
 
 	/**
@@ -228,38 +213,38 @@ public class SEPC {
 		boolean       keepCluster;
 		int           numClustersFoundLastTry = 0;
 
-		clusters = new ArrayList<Cluster>();
+		m_clusters = new ArrayList<Cluster>();
 		while (searching) {
-		  bestCluster = new SepcCluster(new boolean[numDims], new ArrayList<Integer>());
-		  for (int trial = 0; trial < k; ++trial) {
+		  bestCluster = new SepcCluster(new boolean[m_numDims], new ArrayList<Integer>());
+		  for (int trial = 0; trial < m_k; ++trial) {
 				currCluster = buildCluster();
 				keepCluster = isKeeper(currCluster, bestCluster.quality());
 				if (keepCluster) {
-					if (! disjoint) {
+					if (! m_disjoint) {
 						removeSubClusters(currCluster);
-						clusters.add(currCluster);
+						m_clusters.add(currCluster);
 					}
 					if (bestCluster.quality() < currCluster.quality()) {
 						bestCluster = currCluster;
 					} 
 				}
 			}
-			if (disjoint) {
+			if (m_disjoint) {
 			  // make sure we found a cluster other than the default best cluster
 			  if (bestCluster.m_objects.size() > 0) {
 			    allocatePoints(bestCluster);
-			    clusters.add(bestCluster);
+			    m_clusters.add(bestCluster);
 			  }
 			}
-			if (clusters.size() <= numClustersFoundLastTry) {
+			if (m_clusters.size() <= numClustersFoundLastTry) {
 				searching = false;
 			} else {
-				numClustersFoundLastTry = clusters.size();
-				searching = stillSearching(bestCluster.quality(), clusters.size());
+				numClustersFoundLastTry = m_clusters.size();
+				searching = stillSearching(bestCluster.quality(), m_clusters.size());
 			}
 		}
 
-		return clusters;
+		return m_clusters;
 	}
 
 	/**
@@ -269,7 +254,7 @@ public class SEPC {
 	private void allocatePoints(SepcCluster cluster) {
 		for (int i = 0; i < cluster.m_objects.size(); ++i) {
 			int position = cluster.m_objects.get(i);
-			data.get(position).allocated = true;
+			m_allocated[position] = true;
 		}
 	}
 
@@ -278,9 +263,9 @@ public class SEPC {
 	 * @param cluster
 	 */
 	private void removeSubClusters(SepcCluster cluster) {
-		for (ListIterator<Cluster> iter = clusters.listIterator(); iter.hasNext();) {
+		for (ListIterator<Cluster> iter = m_clusters.listIterator(); iter.hasNext();) {
 		  SepcCluster c = (SepcCluster)iter.next();
-		  if (c.overlap(cluster, maxUnmatchedSubspaces) > maxOverlap) {
+		  if (c.overlap(cluster, m_maxUnmatchedSubspaces) > m_maxOverlap) {
         iter.remove();
       }
 		}
@@ -306,17 +291,17 @@ public class SEPC {
 	private boolean isKeeper(SepcCluster cluster, double bestQual) {
 		boolean retVal = true;
 		
-		if (cluster.quality() < mu_0) {
+		if (cluster.quality() < m_minQual) {
 			retVal = false; // min quality not met, try again
-		} else if (disjoint) {
+		} else if (m_disjoint) {
 			if (cluster.quality() <= bestQual) {
 				retVal = false;
 			}
-		} else if (!disjoint) {
+		} else if (!m_disjoint) {
 			// check to see if the found cluster overlaps with existing clusters
-			for (Cluster clust : clusters) {
+			for (Cluster clust : m_clusters) {
 				SepcCluster c = (SepcCluster)clust;
-				if (cluster.overlap(c, maxUnmatchedSubspaces) > maxOverlap && 
+				if (cluster.overlap(c, m_maxUnmatchedSubspaces) > m_maxOverlap && 
 						cluster.quality() < c.quality()) {
 					retVal = false; // currCluster is mostly in c
 					break;
@@ -331,17 +316,17 @@ public class SEPC {
 	 * @return
 	 */
 	private SepcCluster buildCluster() {
-		List<Integer> samp = randomSample(s);
-		SepcCluster c = new SepcCluster(new boolean[numDims], 
+		List<Integer> samp = randomSample(m_s);
+		SepcCluster c = new SepcCluster(new boolean[m_numDims], 
 		    new ArrayList<Integer>());
 		int position = 0;
 
-		c.setBeta(beta);
-		c.setWidth(width);
-		if (c.calcBounds(samp, data)) {
-			for (DataPoint d : data) {
-				if (! d.allocated) { // already added to a cluster, only used in disjoint mode
-					if (c.bounds(d.instance)) {
+		c.setBeta(m_beta);
+		c.setWidth(m_width);
+		if (c.calcBounds(samp, m_dataSet)) {
+			for (int i = 0; i < m_dataSet.numInstances(); i++) {
+			  if (!m_allocated[i]) { // already added to a cluster, only used in disjoint mode
+					if (c.bounds(m_dataSet.instance(i))) {
 						c.m_objects.add(position);
 					}
 				}
@@ -362,15 +347,15 @@ public class SEPC {
 	 */
 	private boolean stillSearching(double bestQual, int numClustersFound) {
 		int ptsRemaining = numPointsRemaining();
-		int minClusterSize = (int)(getAlpha() * data.size());
+		int minClusterSize = (int)(getAlpha() * m_dataSet.numInstances());
 		
-		if (bestQual < this.mu_0) {
+		if (bestQual < this.m_minQual) {
 			//System.out.println("mu < mu_0 -> Done searching!");
 			return false;
-		} else if (numClusters > 0 && numClusters <= numClustersFound) {
+		} else if (m_numClusters > 0 && m_numClusters <= numClustersFound) {
 			//System.out.println("Found the designated number of clusters -> Done searching!");
 			return false;
-		} else if (ptsRemaining < s) {
+		} else if (ptsRemaining < m_s) {
 			//System.out.println("Fewer than s points left unclustered -> Done searching!");
 			return false;
 		} else if (ptsRemaining < minClusterSize) {
@@ -388,8 +373,8 @@ public class SEPC {
 	private int numPointsRemaining() {
 		int retVal = 0;
 
-		for (DataPoint pt : data) {
-			retVal += pt.allocated ? 0 : 1;  
+		for (boolean b : m_allocated) {
+			retVal += b ? 0 : 1;  
 		}
 		return retVal;
 	}
@@ -445,28 +430,26 @@ public class SEPC {
 	  
 		return answer;
 	}
-
+	
 	/**
-	 * randomSample
-	 * 
-	 * @param sampSize The number of instances to include in the sample.
-	 * 
-	 * @return A randomly selected set of instances from the data set.
-	 */
-	private List<Integer> randomSample(final int sampSize) {
-		Set<Integer> sample = new HashSet<Integer>(sampSize);
-		int numInstances = data.size();
-		int position;
+   * randomSample
+   * 
+   * @param sampSize The number of instances to include in the sample.
+   * 
+   * @return A randomly selected set of instances from the m_dataSet.
+   */
+  private List<Integer> randomSample(final int sampSize) {
+    Set<Integer> sample = new HashSet<Integer>(sampSize);
+    int numInstances = m_dataSet.numInstances();
+    int position;
 
-		while (sample.size() < sampSize) {
-			position = gen.nextInt(numInstances);
-			if (data.get(position).allocated == false) {
-				sample.add(position);
-			}
-		}
+    while (sample.size() < sampSize) {
+      position = m_RNG.nextInt(numInstances);
+      sample.add(position);
+    }
 
-		return new ArrayList<Integer>(sample);
-	}
+    return new ArrayList<Integer>(sample);
+  }
 }
 
 

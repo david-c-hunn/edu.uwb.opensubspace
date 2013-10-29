@@ -1,6 +1,6 @@
 package uwb.subspace.sepc;
 
-import i9.data.core.Instance;
+import i9.data.core.DataSet;
 import i9.subspace.base.Cluster;
 
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import uwb.subspace.sepc.SEPC.DataPoint;
+import weka.core.Instance;
 
 public class SepcCluster extends Cluster {
 	
@@ -54,16 +54,16 @@ public class SepcCluster extends Cluster {
 	 * @return True if a subspace cluster is found that meets the m_width 
 	 *         requirement.
 	 */
-	public boolean calcBounds(List<Integer> sample, List<DataPoint> data) {
-		ArrayList<ArrayList<Double>> discSet = transpose(sample, data);
+	public boolean calcBounds(List<Integer> sample, DataSet data) {
+	  List<double[]> discSet = transpose(sample, data);
 
 		// find the congregating dimensions and the associated ranges
 		for (int c = 0; c < discSet.size(); ++c) {
 			double min, max;
 
-			Collections.sort(discSet.get(c));
-			min = discSet.get(c).get(0);
-			max = discSet.get(c).get(discSet.get(c).size() - 1);
+			Arrays.sort(discSet.get(c));
+			min = discSet.get(c)[0];
+			max = discSet.get(c)[discSet.get(c).length - 1];
 			if (Math.abs(max - min) <= m_width) {
 				m_subspace[c] = true;
 				m_lowBounds[c] = max - m_width;
@@ -89,24 +89,24 @@ public class SepcCluster extends Cluster {
 	 * @param data   The data to pull instances from.
 	 * @return A transposed matrix.
 	 */
-	private ArrayList<ArrayList<Double>> transpose(List<Integer> sample, List<DataPoint> data) {
-		ArrayList<ArrayList<Double>> retVal = new ArrayList<ArrayList<Double>>();
-		int cols = data.get(0).instance.getDataSet().getNumDimensions();
-		int rows = sample.size();
+	private List<double[]> transpose(List<Integer> sample, DataSet data) {
+	  List<double[]> retVal = new ArrayList<double[]>();
+    int cols = data.getNumDimensions();
+    int rows = sample.size();
 
-		for (int c = 0; c < cols; ++c) {
-			retVal.add(new ArrayList<Double>());
-		}
+    for (int c = 0; c < cols; ++c) {
+      retVal.add(new double[rows]);
+    }
 
-		for (int r = 0; r < rows; ++r) {
-			Instance inst = data.get(sample.get(r)).instance;
-			double values[] = inst.getFeatureArray();
-			for (int c = 0; c < cols; ++c) {
-				retVal.get(c).add(values[c]);
-			}
-		}
-		return retVal;
-	}
+    for (int r = 0; r < rows; ++r) {
+      Instance inst = data.instance(sample.get(r));
+      double values[] = inst.toDoubleArray();
+      
+      for (int c = 0; c < cols; ++c) {
+        retVal.get(c)[r] = values[c];
+      }
+    }
+    return retVal;	}
 
 	/**
 	 * bounds: An instance is bounded by a cluster if its points fall within the 
@@ -121,10 +121,11 @@ public class SepcCluster extends Cluster {
 	 */
 	public boolean bounds(Instance inst) {
 		boolean retVal = true;
-
-		for (int i = 0; i < inst.getArray().length - 1; ++i) {
-			if (inst.getElement(i) < m_lowBounds[i] || 
-          inst.getElement(i) > m_uppBounds[i]) {
+		double[] instArray = inst.toDoubleArray();
+		
+		for (int i = 0; i < instArray.length - 1; ++i) {
+			if (instArray[i] < m_lowBounds[i] || 
+          instArray[i] > m_uppBounds[i]) {
         retVal = false;
         break;
       }

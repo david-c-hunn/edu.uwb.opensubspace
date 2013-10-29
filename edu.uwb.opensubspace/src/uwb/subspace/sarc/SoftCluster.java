@@ -5,12 +5,11 @@ import i9.data.core.DataSet;
 import i9.subspace.base.Cluster;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.math.stat.descriptive.moment.Variance;
 import org.apache.commons.math3.stat.descriptive.moment.Mean;
+
 import weka.core.Instance;
 
 /**
