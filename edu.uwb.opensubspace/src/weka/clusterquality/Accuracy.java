@@ -26,14 +26,14 @@ public class Accuracy extends ClusterQualityMeasure{
 
     StringBuffer result = new StringBuffer();
 
-    // f�r jedes Objekt eine Liste anlegen, in der gleich die Clusternummern
+    // fr jedes Objekt eine Liste anlegen, in der gleich die Clusternummern
     // reinkommen
     ArrayList<HashSet<Integer>> objIDnachCluster = new ArrayList<HashSet<Integer>>();
     for (int i = 0; i < instances.numInstances(); i++) {
       objIDnachCluster.add(new HashSet<Integer>(clusterList.size()));
     }
 
-    // bestimme, in welche Cluster ein Objekt alles f�llt
+    // bestimme, in welche Cluster ein Objekt alles fllt
     for (int i = 0; i < clusterList.size(); i++) {
       Cluster c = clusterList.get(i);
       for (Integer s : c.m_objects) {
@@ -41,7 +41,7 @@ public class Accuracy extends ClusterQualityMeasure{
       }
     }
 
-    //erzeuge neues instance set f�r klassifikator
+    //erzeuge neues instance set fr klassifikator
     FastVector atts = new FastVector();
     for (int i = 0; i < clusterList.size(); i++) {
       atts.addElement(new Attribute("c"+i));
@@ -57,7 +57,7 @@ public class Accuracy extends ClusterQualityMeasure{
     atts.addElement(new Attribute("class", attVals));
 
     Instances accSet = new Instances("Accuracy", atts, 0);
-    //TODO: direkt �ber attribut
+    //TODO: direkt ber attribut
     accSet.setClassIndex(accSet.numAttributes()-1);
     for (int i = 0; i < instances.numInstances(); i++) {
       double[] vals = new double[accSet.numAttributes()];

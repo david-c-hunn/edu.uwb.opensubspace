@@ -22,7 +22,7 @@ public class Doc extends SubspaceClusterer implements OptionHandler {
 	private double w = 50; // wird absolut gemessen
 	private int maxiter = 1024;	
 	private int d0 = -1; // so wird DOC genutzt
-	private int k = 2; // ungefähre Anzahl Cluster auch bei DOC
+	private int k = 2; // ungefhre Anzahl Cluster auch bei DOC
 
 	@Override
 	public void buildSubspaceClusterer(Instances data) throws Exception {

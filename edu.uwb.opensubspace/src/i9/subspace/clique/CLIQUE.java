@@ -18,7 +18,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 
-/* überarbeitete version von sundermeyer */
+/* berarbeitete version von sundermeyer */
 
 public class CLIQUE {
 

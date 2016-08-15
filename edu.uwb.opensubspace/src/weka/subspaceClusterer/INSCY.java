@@ -28,7 +28,7 @@ public class INSCY extends SubspaceClusterer implements OptionHandler{
 	public INSCY(){
 		super();
 		param = new Parameters();
-		param.overlapSize = 2; //wird abhängig von epsilon berechnet
+		param.overlapSize = 2; //wird abhngig von epsilon berechnet
 //		//gesetzte Werte
 		param.maximalClusterOnly = true; 
 		param.pruningVariants = 2; // 1=NO,2=BORDER,3=CLUSTER, sonst = ELSE

@@ -204,7 +204,7 @@ public class Distance2DPanel extends JPanel implements MouseListener, PropertyCh
 		
 		//Predefined colors
 		Color[] color_base = { 
-				new Color(222, 251, 45), // hell grün
+				new Color(222, 251, 45), // hell grn
 				new Color(251, 254, 1), // gelb
 //				new Color(252, 183, 2), // orange
 				new Color(255,101,0), //dunkel orange

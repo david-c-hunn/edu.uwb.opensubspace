@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Repräsentation des Clusters (Dimensionsmenge, Objektmenge)
+ * Representation des Clusters (Dimensionsmenge, Objektmenge)
  * 
  * 
  */

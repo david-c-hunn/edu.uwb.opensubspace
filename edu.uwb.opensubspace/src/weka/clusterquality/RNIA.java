@@ -111,17 +111,17 @@ public class RNIA extends ClusterQualityMeasure {
 		
 		for(int d=0; d<dims; d++) {
 			
-			// diese Zeile ist erstmal überhaupt nicht abgedeckt
+			// diese Zeile ist erstmal -berhaupt nicht abgedeckt
 			for(int i=0; i<size; i++) {
 				timesObjectFound[i] = 0;
 				timesObjectTrue[i] = 0;
 			}
 			
 			// nur Cluster welche auch diese Dimension als relevant haben
-			// erhöhen die Abdeckung (für diese "Dimensionszeile")
+			// erh-hen die Abdeckung (f-r diese "Dimensionszeile")
 			for(Cluster c : clusterList) {
 				if(c.m_subspace[d]) { // dimension ist relevant
-					// für jedes Object in diesem Cluster nun Abdeckung erhöhen
+					// f-r jedes Object in diesem Cluster nun Abdeckung erh-hen
 					for(int obj : c.m_objects) {
 						timesObjectFound[obj]++;
 					}
@@ -129,7 +129,7 @@ public class RNIA extends ClusterQualityMeasure {
 			}
 			for(Cluster c : trueclusters) {
 				if(c.m_subspace[d]) { // dimension ist relevant
-					// für jedes Object in diesem Cluster nun Abdeckung erhöhen
+					// f-r jedes Object in diesem Cluster nun Abdeckung erh-hen
 					for(int obj : c.m_objects) {
 						timesObjectTrue[obj]++;
 					}
@@ -137,7 +137,7 @@ public class RNIA extends ClusterQualityMeasure {
 			}
 			
 			// so, nun kann die union und intersection erstmal
-			// für diese "Dimensionszeile" bestimmt werden
+			// f-r diese "Dimensionszeile" bestimmt werden
 			
 			// union war die summe der maxima
 			// intersection die summe der minima
@@ -146,7 +146,7 @@ public class RNIA extends ClusterQualityMeasure {
 				intersection += Math.min(timesObjectFound[i],timesObjectTrue[i]);
 			}
 			
-			// für die weiteren Dimensionen wird das einfach hochgezählt
+			// f-r die weiteren Dimensionen wird das einfach hochgez-hlt
 			// -> wir sind fertig
 		}
 		

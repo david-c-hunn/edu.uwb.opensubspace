@@ -39,7 +39,7 @@ public class F1Measure extends ClusterQualityMeasure{
 			inClasses[(int)obj.classValue()].add(i);
 		}
 		
-		//Die häufigkeiten der Klassen in den Ausgabeclustern bestimmen und F_value bzgl. dieser Klasse berechnen.
+		//Die hufigkeiten der Klassen in den Ausgabeclustern bestimmen und F_value bzgl. dieser Klasse berechnen.
 		for (int i = 0; i < clusters.size(); i++) {
 			int[] classFrequency = new int[size]; 
 			for (int j = 0; j < size; j++){ 
