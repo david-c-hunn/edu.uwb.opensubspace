@@ -5,3 +5,4 @@ TODO
 .gitignore
 *.txt
 *.log
+/build

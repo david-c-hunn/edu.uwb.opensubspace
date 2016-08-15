@@ -5,8 +5,8 @@ import static java.lang.Integer.parseInt;
 import java.util.List;
 
 import be.uantwerpen.adrem.cart.io.InputFile;
-import uantwerpen.maximizer.Freq;
-import uantwerpen.maximizer.ItemsetMaximalMiner;
+import uantwerp.maximizer.Freq;
+import uantwerp.maximizer.ItemsetMaximalMiner;
 
 /**
  * Driver class for the algorithm.

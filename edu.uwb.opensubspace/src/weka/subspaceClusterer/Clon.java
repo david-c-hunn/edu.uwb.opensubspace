@@ -112,7 +112,7 @@ public class Clon extends SubspaceClusterer implements OptionHandler {
 	}
 
 	public static void main (String[] argv) {
-		runSubspaceClusterer(new CartiClon(), argv);
+		runSubspaceClusterer(new Clon(), argv);
 	}	
 
 }
