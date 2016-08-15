@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Ant build file for Dave's OpenSubspace">
+    
+    <property name="src.dir" value="src"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/> 
+    <property name="jar.dir" value="${build.dir}/jar"/>
+    <property name="lib.dir" value="library"/>
+
+    <path id="classpath">
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset> 
+    </path>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+    
+    <target name="compile">
+        <mkdir dir="${classes.dir}"/>
+        <javac srcdir="src" destdir="${classes.dir}" classpathref="classpath"/>
+    </target>
+    
+    <target name="jar">
+        <jar destfile="${jar.dir}/evaluator.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="weka.subspaceClusterer.Evaluator"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="${classes.dir}"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-math-1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/commons-math3-3.1.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/i9-subspace.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/i9-weka.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/j3dcore.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/j3dutils.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/Jama.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/jsc.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/vecmath.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/weka.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/carti-model-0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${lib.dir}/guava-18.0.jar"/>
+        </jar>
+    </target>
+
+    <target name="run">
+        <java jar="${jar.dir}/evaluator.jar" fork="true"/>
+    </target>
+
+</project>
