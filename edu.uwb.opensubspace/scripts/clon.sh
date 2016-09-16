@@ -7,15 +7,15 @@
 
 # non-algorithm specific settings
 jar="build/jar/evaluator.jar"
-dbs="Databases/*/*.arff"
+dbs="Databases/real*/*.arff"
 metrics="F1Measure"
 # Accuracy:CE:ClusterDistribution:Coverage:Entropy:RNIA
 # the algorithm
 clusterer="Clon"
 
 # algorithm arguments
-k=170
-minLen=90
+kOffset=10
+minLenOffset=5
 
 echo "Running evaluations for ${clusterer}..."
 
@@ -27,22 +27,18 @@ do
 		outfile="output/clon-synth"
 
 		echo "Starting evaluation of ${in_file}..."
-		let k=150  # initialize
-		for i in {1..1}
+		let k=100  # initialize
+		for i in {1..5}
 		do
-			let minLen=90  # initialize
-			for j in {1..1}
+			let minLen=5  # initialize
+			for j in {1..5}
 			do
-				# echo "java -Xmx1024m -jar $jar -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -k $k -minLen $minLen -timelimit 30 >> $outfile"
+				# echo "java -Xmx8192m -jar $jar -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -k $k -minLen $minLen -timelimit 30 >> $outfile"
 				java -Xmx8192m -jar $jar -sc $clusterer -t $in_file -T $true_file -c last -M $metrics -k $k -minLen $minLen -timelimit 30 >> $outfile
-				# XI="$(echo "$XI + $XI_OFFSET" | bc)"
+				minLen="$(echo "${minLen} + ${minLenOffset}" | bc)"
 			done
-			# TAU="$(echo "$TAU * $TAU_OFFSET" | bc)"
+			k="$(echo "${k} + ${kOffset}" | bc)"
 		done
 		echo "Finished evaluation of ${in_file}..." 
 	done
 done
-
-
-
-

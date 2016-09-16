@@ -357,6 +357,8 @@ public class Evaluator implements Serializable {
                     (ArrayList<Cluster>)m_clusterer.getSubspaceClustering();
             }
 
+            results.append("NumClusters=\t" + clusterList.size() + "\t");
+
             // calculate each quality metric
             for (ClusterQualityMeasure m : m_metrics) {
                 m.calculateQuality(clusterList, m_dataSet, m_trueClusters);
@@ -423,7 +425,6 @@ public class Evaluator implements Serializable {
             end = System.currentTimeMillis();
             m_clusteringResults.append(end - start);
             m_clusteringResults.append("\t");
-
             //System.out.println("\n==========================================\n");
             //System.out.println(m_clusteringResults.toString());
 
